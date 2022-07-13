@@ -376,12 +376,6 @@ export default class OracleDriver extends AbstractDriver {
         await promise;
     }
 
-
-    // eslint-disable-next-line class-methods-use-this
-    public async UseDB() {
-        // not supported
-    }
-
     public async CheckIfDBExists(dbName: string): Promise<boolean> {
         const { rows } = await this.Connection.execute<any>(
             `select count(*) as CNT from dba_users where username='${dbName.toUpperCase()}'`

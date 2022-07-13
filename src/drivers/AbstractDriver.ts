@@ -161,10 +161,12 @@ export default abstract class AbstractDriver {
     ): Promise<Entity[]> {
         let dbModel = [] as Entity[];
         await this.ConnectToServer(connectionOptions);
+        console.log("connected")
         dbModel = await this.GetAllTables(
             connectionOptions.schemaNames,
             connectionOptions.databaseName
         );
+        console.log("bar");
         await this.GetCoulmnsFromEntity(
             dbModel,
             connectionOptions.schemaNames,
@@ -183,26 +185,7 @@ export default abstract class AbstractDriver {
         );
         await this.DisconnectFromServer();
         dbModel = AbstractDriver.FindManyToManyRelations(dbModel);
-        dbModel = AbstractDriver.FilterGeneratedTables(
-            dbModel,
-            connectionOptions.skipTables,
-            connectionOptions.onlyTables
-        );
         return dbModel;
-    }
-
-    static FilterGeneratedTables(
-        dbModel: Entity[],
-        skipTables: string[],
-        onlyTables: string[]
-    ): Entity[] {
-        return dbModel
-            .filter((table) => !skipTables.includes(table.sqlName))
-            .filter(
-                (table) =>
-                    onlyTables.length === 0 ||
-                    onlyTables.includes(table.sqlName)
-            );
     }
 
     public abstract ConnectToServer(

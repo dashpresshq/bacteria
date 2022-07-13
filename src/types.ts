@@ -14,6 +14,4 @@ export interface IConnectionOptions {
     schemaNames: string[];
     instanceName?: string;
     ssl: boolean;
-    skipTables: string[];
-    onlyTables: string[];
 }

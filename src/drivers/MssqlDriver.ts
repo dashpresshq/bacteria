@@ -471,11 +471,6 @@ export default class MssqlDriver extends AbstractDriver {
         await promise;
     }
 
-    public async UseDB(dbName: string) {
-        const request = new this.MSSQL.Request(this.Connection);
-        await request.query(`USE "${dbName}"; `);
-    }
-
     public async CheckIfDBExists(dbName: string): Promise<boolean> {
         const request = new this.MSSQL.Request(this.Connection);
         const resp = await request.query(
