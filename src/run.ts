@@ -1,5 +1,6 @@
-import fs = require('fs-extra');
-import path = require('path');
+import fs from "fs-extra";
+import path from "path";
+
 import { introspect } from '.';
 import { option } from './option';
 

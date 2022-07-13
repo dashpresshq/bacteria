@@ -53,6 +53,10 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
+    "@types/fs-extra": "^9.0.13",
+    "@types/mssql": "^8.0.3",
+    "@types/pg": "^8.6.5",
+    "@types/sqlite3": "^3.1.8",
     "change-case": "^4.1.2",
     "mssql": "^8.1.2",
     "mysql2": "^2.3.3",
