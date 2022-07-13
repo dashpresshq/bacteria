@@ -1145,9 +1145,9 @@
   resolved "https://registry.npmjs.org/@gar/promisify/-/promisify-1.1.3.tgz"
   integrity sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==
 
-"@gothicgeeks/eslint-config@git+ssh://git@github.com:thrownullexception/eslint-config.git#928682a6618dd19dcc13ee0beb69c26ba8ebe01b":
-  version "0.1.5"
-  resolved "git+ssh://git@github.com:thrownullexception/eslint-config.git#928682a6618dd19dcc13ee0beb69c26ba8ebe01b"
+"@gothicgeeks/eslint-config@git+ssh://git@github.com:thrownullexception/eslint-config.git#c002cdbbc8097daa41ae09e9927f41e2ad90babd":
+  version "0.1.6"
+  resolved "git+ssh://git@github.com:thrownullexception/eslint-config.git#c002cdbbc8097daa41ae09e9927f41e2ad90babd"
   dependencies:
     "@typescript-eslint/eslint-plugin" "^5.30.5"
     "@typescript-eslint/parser" "^5.30.5"

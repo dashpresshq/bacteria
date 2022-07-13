@@ -560,8 +560,7 @@ export default class PostgresDriver extends AbstractDriver {
       );
       if (!ownerTable || !relatedTable) {
         LogError(
-          `Relation between tables ${rows[0].tablewithforeignkey} and ${rows[0].tablereferenced} wasn't found in entity model.`,
-          true
+          `Relation between tables ${rows[0].tablewithforeignkey} and ${rows[0].tablereferenced} wasn't found in entity model.`
         );
         return;
       }

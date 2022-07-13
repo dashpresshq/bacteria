@@ -14,7 +14,7 @@ export default class SqliteDriver extends AbstractDriver {
 
   private db: sqliteLib.Database | undefined;
 
-  private tablesWithGeneratedPrimaryKey: string[] = new Array<string>();
+  private tablesWithGeneratedPrimaryKey: string[] = [];
 
   public GetAllTablesQuery: any;
 
@@ -303,8 +303,7 @@ export default class SqliteDriver extends AbstractDriver {
           const relatedTable = entities.find((v) => v.name === rows[0].table);
           if (!ownerTable || !relatedTable) {
             LogError(
-              `Relation between tables ${entity.name} and ${rows[0].table} wasn't found in entity model.`,
-              true
+              `Relation between tables ${entity.name} and ${rows[0].table} wasn't found in entity model.`
             );
             return;
           }

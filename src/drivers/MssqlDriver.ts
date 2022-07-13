@@ -390,8 +390,7 @@ export default class MssqlDriver extends AbstractDriver {
       );
       if (!ownerTable || !relatedTable) {
         LogError(
-          `Relation between tables ${rows[0].TableWithForeignKey} and ${rows[0].TableReferenced} wasn't found in entity model.`,
-          true
+          `Relation between tables ${rows[0].TableWithForeignKey} and ${rows[0].TableReferenced} wasn't found in entity model.`
         );
         return;
       }

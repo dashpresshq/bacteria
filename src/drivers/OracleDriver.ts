@@ -287,8 +287,7 @@ export default class OracleDriver extends AbstractDriver {
 
       if (!ownerTable || !relatedTable) {
         LogError(
-          `Relation between tables ${rows[0].OWNER_TABLE_NAME} and ${rows[0].CHILD_TABLE_NAME} wasn't found in entity model.`,
-          true
+          `Relation between tables ${rows[0].OWNER_TABLE_NAME} and ${rows[0].CHILD_TABLE_NAME} wasn't found in entity model.`
         );
         return;
       }
