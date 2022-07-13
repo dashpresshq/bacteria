@@ -1,5 +1,5 @@
 export type RelationId = {
-    fieldName: string;
-    fieldType: string;
-    relationField: string;
+  fieldName: string;
+  fieldType: string;
+  relationField: string;
 };

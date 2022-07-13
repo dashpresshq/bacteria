@@ -1,5 +1,6 @@
 {
-  "version": "0.1.0",
+  "name": "introspect",
+  "version": "0.1.1",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -7,60 +8,46 @@
     "dist",
     "src"
   ],
-  "engines": {
-    "node": ">=10"
-  },
   "scripts": {
+    "test": "jest --detectOpenHandles --runInBand",
     "start": "tsdx watch",
     "build": "tsdx build",
-    "test": "tsdx test",
-    "lint": "tsdx lint",
-    "prepare": "tsdx build",
-    "size": "size-limit",
-    "analyze": "size-limit --why"
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "typecheck": "tsc",
+    "test:cov": "jest --coverage",
+    "lint": "eslint --ext ts src",
+    "lint:fix": "eslint --fix",
+    "analyze": "size-limit --why",
+    "prepare": "tsdx build"
   },
-  "peerDependencies": {},
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
+  "engines": {
+    "node": "=16",
+    "npm": "8"
   },
-  "prettier": {
-    "printWidth": 80,
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5"
-  },
-  "name": "introspect",
   "author": "Ayobami Akingbade",
   "module": "dist/introspect.esm.js",
-  "size-limit": [
-    {
-      "path": "dist/introspect.cjs.production.min.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "dist/introspect.esm.js",
-      "limit": "10 KB"
-    }
-  ],
-  "devDependencies": {
-    "@size-limit/preset-small-lib": "^7.0.8",
-    "husky": "^8.0.1",
-    "size-limit": "^7.0.8",
-    "tsdx": "^0.14.1",
-    "tslib": "^2.4.0",
-    "typescript": "^4.7.4"
-  },
   "dependencies": {
     "@types/fs-extra": "^9.0.13",
     "@types/mssql": "^8.0.3",
+    "@types/oracledb": "^5.2.3",
     "@types/pg": "^8.6.5",
     "@types/sqlite3": "^3.1.8",
     "change-case": "^4.1.2",
     "mssql": "^8.1.2",
     "mysql2": "^2.3.3",
+    "oracledb": "^5.4.0",
     "pg": "^8.7.3",
     "sqlite3": "^5.0.8"
+  },
+  "devDependencies": {
+    "@gothicgeeks/eslint-config": "git+ssh://git@github.com:thrownullexception/eslint-config.git#928682a6618dd19dcc13ee0beb69c26ba8ebe01b",
+    "@size-limit/preset-small-lib": "^7.0.8",
+    "eslint": "^8.2.0",
+    "husky": "^8.0.1",
+    "prettier": "^2.7.1",
+    "size-limit": "^7.0.8",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.4.0",
+    "typescript": "^4.7.4"
   }
 }

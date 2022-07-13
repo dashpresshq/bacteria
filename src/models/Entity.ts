@@ -4,12 +4,12 @@ import { Index } from "./Index";
 import { RelationId } from "./RelationId";
 
 export type Entity = {
-    name: string;
+  name: string;
 
-    schema?: string;
+  schema?: string;
 
-    columns: Column[];
-    relationIds: RelationId[];
-    relations: Relation[];
-    indices: Index[];
+  columns: Column[];
+  relationIds: RelationId[];
+  relations: Relation[];
+  indices: Index[];
 };
