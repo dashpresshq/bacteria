@@ -31,10 +31,7 @@ export default class OracleDriver extends AbstractDriver {
         }
     }
 
-    public async GetAllTables(
-        schemas: string[],
-        dbNames: string[]
-    ): Promise<Entity[]> {
+    public async GetAllTables(): Promise<Entity[]> {
         const response = (
             await this.Connection.execute<{
                 TABLE_SCHEMA: string;
@@ -54,7 +51,7 @@ export default class OracleDriver extends AbstractDriver {
                 sqlName: val.TABLE_NAME,
                 tscName: val.TABLE_NAME,
                 fileName: val.TABLE_NAME,
-                database: dbNames.length > 1 ? val.DB_NAME : "",
+                database: "",
                 schema: val.TABLE_SCHEMA,
                 fileImports: [],
             });
@@ -274,7 +271,6 @@ export default class OracleDriver extends AbstractDriver {
     public async GetRelations(
         entities: Entity[],
         schemas: string[],
-        dbNames: string[],
     ): Promise<Entity[]> {
         const response = (
             await this.Connection.execute<{
@@ -347,7 +343,7 @@ export default class OracleDriver extends AbstractDriver {
         let config: Oracle.ConnectionAttributes;
         if (connectionOptions.user === String(process.env.ORACLE_UsernameSys)) {
             config = {
-                connectString: `${connectionOptions.host}:${connectionOptions.port}/${connectionOptions.databaseNames[0]}`,
+                connectString: `${connectionOptions.host}:${connectionOptions.port}/${connectionOptions.databaseName}`,
                 externalAuth: connectionOptions.ssl,
                 password: connectionOptions.password,
                 privilege: this.Oracle.SYSDBA,
@@ -355,7 +351,7 @@ export default class OracleDriver extends AbstractDriver {
             };
         } else {
             config = {
-                connectString: `${connectionOptions.host}:${connectionOptions.port}/${connectionOptions.databaseNames[0]}`,
+                connectString: `${connectionOptions.host}:${connectionOptions.port}/${connectionOptions.databaseName}`,
                 externalAuth: connectionOptions.ssl,
                 password: connectionOptions.password,
                 user: connectionOptions.user,
@@ -380,22 +376,10 @@ export default class OracleDriver extends AbstractDriver {
         await promise;
     }
 
-    public async CreateDB(dbName: string) {
-        await this.Connection.execute(
-            `CREATE USER ${dbName} IDENTIFIED BY ${String(
-                process.env.ORACLE_Password
-            )}`
-        );
-        await this.Connection.execute(`GRANT CONNECT TO ${dbName}`);
-    }
 
     // eslint-disable-next-line class-methods-use-this
     public async UseDB() {
         // not supported
-    }
-
-    public async DropDB(dbName: string) {
-        await this.Connection.execute(`DROP USER ${dbName} CASCADE`);
     }
 
     public async CheckIfDBExists(dbName: string): Promise<boolean> {

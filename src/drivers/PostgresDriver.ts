@@ -31,7 +31,6 @@ export default class PostgresDriver extends AbstractDriver {
 
     public async GetAllTables(
         schemas: string[],
-        dbNames: string[]
     ): Promise<Entity[]> {
         const response: {
             TABLE_SCHEMA: string;
@@ -54,7 +53,7 @@ export default class PostgresDriver extends AbstractDriver {
                 sqlName: val.TABLE_NAME,
                 tscName: val.TABLE_NAME,
                 fileName: val.TABLE_NAME,
-                database: dbNames.length > 1 ? val.DB_NAME : "",
+                database:  "",
                 schema: val.TABLE_SCHEMA,
                 fileImports: [],
             });
@@ -508,7 +507,6 @@ export default class PostgresDriver extends AbstractDriver {
     public async GetRelations(
         entities: Entity[],
         schemas: string[],
-        dbNames: string[],
     ): Promise<Entity[]> {
         const response: {
             tablewithforeignkey: string;
@@ -627,7 +625,7 @@ export default class PostgresDriver extends AbstractDriver {
 
     public async ConnectToServer(connectionOptons: IConnectionOptions) {
         this.Connection = new this.PG.Client({
-            database: connectionOptons.databaseNames[0],
+            database: connectionOptons.databaseName,
             host: connectionOptons.host,
             password: connectionOptons.password,
             port: connectionOptons.port,
@@ -652,14 +650,6 @@ export default class PostgresDriver extends AbstractDriver {
         });
 
         await promise;
-    }
-
-    public async CreateDB(dbName: string) {
-        await this.Connection.query(`CREATE DATABASE ${dbName}; `);
-    }
-
-    public async DropDB(dbName: string) {
-        await this.Connection.query(`DROP DATABASE ${dbName}; `);
     }
 
     public async CheckIfDBExists(dbName: string): Promise<boolean> {

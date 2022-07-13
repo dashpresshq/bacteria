@@ -32,7 +32,7 @@ export default class MssqlDriver extends AbstractDriver {
 
     public async GetAllTables(
         schemas: string[],
-        dbNames: string[]
+        dbName: string
     ): Promise<Entity[]> {
         const request = new this.MSSQL.Request(this.Connection);
         const response: {
@@ -44,9 +44,7 @@ export default class MssqlDriver extends AbstractDriver {
                 `SELECT TABLE_SCHEMA,TABLE_NAME, table_catalog as "DB_NAME" FROM INFORMATION_SCHEMA.TABLES
         WHERE TABLE_TYPE='BASE TABLE' and TABLE_SCHEMA in (${MssqlDriver.buildEscapedObjectList(
             schemas
-        )}) AND TABLE_CATALOG in (${MssqlDriver.buildEscapedObjectList(
-                    dbNames
-                )})`
+        )}) AND TABLE_CATALOG = ${dbName}`
             )
         ).recordset;
         // const response = await this.GetAllTablesQuery(schemas, dbNames);
@@ -60,7 +58,7 @@ export default class MssqlDriver extends AbstractDriver {
                 sqlName: val.TABLE_NAME,
                 tscName: val.TABLE_NAME,
                 fileName: val.TABLE_NAME,
-                database: dbNames.length > 1 ? val.DB_NAME : "",
+                database: "",
                 schema: val.TABLE_SCHEMA,
                 fileImports: [],
             });
@@ -71,7 +69,7 @@ export default class MssqlDriver extends AbstractDriver {
     public async GetCoulmnsFromEntity(
         entities: Entity[],
         schemas: string[],
-        dbNames: string[]
+        dbName: string
     ): Promise<Entity[]> {
         const request = new this.MSSQL.Request(this.Connection);
         const response: {
@@ -95,9 +93,7 @@ export default class MssqlDriver extends AbstractDriver {
                on tc.TABLE_NAME = c.TABLE_NAME and tc.COLUMN_NAME = c.COLUMN_NAME and tc.TABLE_SCHEMA=c.TABLE_SCHEMA
               where c.TABLE_SCHEMA in (${MssqlDriver.buildEscapedObjectList(
                   schemas
-              )}) AND c.TABLE_CATALOG in (${MssqlDriver.buildEscapedObjectList(
-                dbNames
-            )}) order by ordinal_position
+              )}) AND c.TABLE_CATALOG = ${dbName} order by ordinal_position
         `)
         ).recordset;
         entities.forEach((ent) => {
@@ -265,7 +261,7 @@ export default class MssqlDriver extends AbstractDriver {
     public async GetIndexesFromEntity(
         entities: Entity[],
         schemas: string[],
-        dbNames: string[]
+        dbName: string
     ): Promise<Entity[]> {
         const request = new this.MSSQL.Request(this.Connection);
         /* eslint-disable camelcase */
@@ -278,11 +274,7 @@ export default class MssqlDriver extends AbstractDriver {
             is_primary_key: boolean;
         }[] = [];
         /* eslint-enable camelcase */
-        /* eslint-disable no-await-in-loop */
-        for (const dbName of dbNames) {
-            if (dbNames.length > 1) {
-                await this.UseDB(dbName);
-            }
+       
             const resp = (
                 await request.query(`SELECT
                 TableName = t.name,
@@ -309,7 +301,6 @@ export default class MssqlDriver extends AbstractDriver {
                     t.name, ind.name, ind.index_id, ic.key_ordinal;`)
             ).recordset;
             response.push(...resp);
-        }
 
         /* eslint-enable no-await-in-loop */
         entities.forEach((ent) => {
@@ -343,7 +334,7 @@ export default class MssqlDriver extends AbstractDriver {
     public async GetRelations(
         entities: Entity[],
         schemas: string[],
-        dbNames: string[],
+        dbName: string,
     ): Promise<Entity[]> {
         const request = new this.MSSQL.Request(this.Connection);
         const response: {
@@ -358,10 +349,6 @@ export default class MssqlDriver extends AbstractDriver {
             objectId: number;
         }[] = [];
         /* eslint-disable no-await-in-loop */
-        for (const dbName of dbNames) {
-            if (dbNames.length > 1) {
-                await this.UseDB(dbName);
-            }
             const resp: {
                 TableWithForeignKey: string;
                 // eslint-disable-next-line camelcase
@@ -404,7 +391,6 @@ export default class MssqlDriver extends AbstractDriver {
                     TableWithForeignKey, FK_PartNo`)
             ).recordset;
             response.push(...resp);
-        }
         /* eslint-enable no-await-in-loop */
 
         const relationsTemp: RelationInternal[] = [] as RelationInternal[];
@@ -452,7 +438,7 @@ export default class MssqlDriver extends AbstractDriver {
     }
 
     public async ConnectToServer(connectionOptons: IConnectionOptions) {
-        const databaseName = connectionOptons.databaseNames[0];
+        const databaseName = connectionOptons.databaseName;
         const config: MSSQL.config = {
             database: databaseName,
             options: {
@@ -485,19 +471,9 @@ export default class MssqlDriver extends AbstractDriver {
         await promise;
     }
 
-    public async CreateDB(dbName: string) {
-        const request = new this.MSSQL.Request(this.Connection);
-        await request.query(`CREATE DATABASE "${dbName}"; `);
-    }
-
     public async UseDB(dbName: string) {
         const request = new this.MSSQL.Request(this.Connection);
         await request.query(`USE "${dbName}"; `);
-    }
-
-    public async DropDB(dbName: string) {
-        const request = new this.MSSQL.Request(this.Connection);
-        await request.query(`DROP DATABASE "${dbName}"; `);
     }
 
     public async CheckIfDBExists(dbName: string): Promise<boolean> {

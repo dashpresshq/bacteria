@@ -36,12 +36,7 @@ export default class SqliteDriver extends AbstractDriver {
         }
     }
 
-    public async GetAllTables(
-        /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-        schemas: string[],
-        /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-        dbNames: string[]
-    ): Promise<Entity[]> {
+    public async GetAllTables(): Promise<Entity[]> {
         const ret: Entity[] = [] as Entity[];
         // eslint-disable-next-line camelcase
         const rows = await this.ExecQuery<{ tbl_name: string; sql: string }>(
@@ -303,7 +298,6 @@ export default class SqliteDriver extends AbstractDriver {
     public async GetRelations(
         entities: Entity[],
         schemas: string[],
-        dbNames: string[],
     ): Promise<Entity[]> {
         let retVal = entities;
         await Promise.all(
@@ -378,7 +372,7 @@ export default class SqliteDriver extends AbstractDriver {
     public async ConnectToServer(connectionOptons: IConnectionOptions) {
         const promise = new Promise<void>((resolve, reject) => {
             this.db = new this.sqlite.Database(
-                connectionOptons.databaseNames[0],
+                connectionOptons.databaseName,
                 (err: Error) => {
                     if (err) {
                         TomgUtils.LogError(
@@ -394,16 +388,6 @@ export default class SqliteDriver extends AbstractDriver {
             );
         });
         return promise;
-    }
-
-    // eslint-disable-next-line class-methods-use-this
-    public async CreateDB() {
-        // not supported
-    }
-
-    // eslint-disable-next-line class-methods-use-this
-    public async DropDB() {
-        // not supported
     }
 
     // eslint-disable-next-line class-methods-use-this

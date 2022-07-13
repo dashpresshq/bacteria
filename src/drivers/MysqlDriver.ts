@@ -33,7 +33,7 @@ export default class MysqlDriver extends AbstractDriver {
 
     public async GetAllTables(
         schemas: string[],
-        dbNames: string[]
+        dbName: string
     ): Promise<Entity[]> {
         const response: {
             TABLE_SCHEMA: string;
@@ -43,9 +43,7 @@ export default class MysqlDriver extends AbstractDriver {
             `SELECT TABLE_SCHEMA, TABLE_NAME, TABLE_SCHEMA as DB_NAME
                         FROM information_schema.tables
                         WHERE table_type='BASE TABLE'
-                        AND table_schema IN (${MysqlDriver.buildEscapedObjectList(
-                            dbNames
-                        )})`
+                        AND table_schema = ${dbName}`
         );
         // const response = await this.GetAllTablesQuery(schemas, dbNames);
         const ret: Entity[] = [] as Entity[];
@@ -58,7 +56,7 @@ export default class MysqlDriver extends AbstractDriver {
                 sqlName: val.TABLE_NAME,
                 tscName: val.TABLE_NAME,
                 fileName: val.TABLE_NAME,
-                database: dbNames.length > 1 ? val.DB_NAME : "",
+                database: "",
                 schema: val.TABLE_SCHEMA,
                 fileImports: [],
             });
@@ -69,7 +67,7 @@ export default class MysqlDriver extends AbstractDriver {
     public async GetCoulmnsFromEntity(
         entities: Entity[],
         schemas: string[],
-        dbNames: string[]
+        dbName: string
     ): Promise<Entity[]> {
         const response = await this.ExecQuery<{
             TABLE_NAME: string;
@@ -87,9 +85,7 @@ export default class MysqlDriver extends AbstractDriver {
         }>(`SELECT TABLE_NAME,COLUMN_NAME,COLUMN_DEFAULT,IS_NULLABLE,
             DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,NUMERIC_PRECISION,NUMERIC_SCALE,
             CASE WHEN EXTRA like '%auto_increment%' THEN 1 ELSE 0 END IsIdentity, COLUMN_TYPE, COLUMN_KEY, COLUMN_COMMENT
-            FROM INFORMATION_SCHEMA.COLUMNS where TABLE_SCHEMA IN (${MysqlDriver.buildEscapedObjectList(
-                dbNames
-            )})
+            FROM INFORMATION_SCHEMA.COLUMNS where TABLE_SCHEMA = ${dbName}
 			order by ordinal_position`);
         entities.forEach((ent) => {
             response
@@ -311,7 +307,7 @@ export default class MysqlDriver extends AbstractDriver {
     public async GetIndexesFromEntity(
         entities: Entity[],
         schemas: string[],
-        dbNames: string[]
+        dbName: string
     ): Promise<Entity[]> {
         /* eslint-disable camelcase */
         const response = await this.ExecQuery<{
@@ -324,9 +320,7 @@ export default class MysqlDriver extends AbstractDriver {
         }>(`SELECT TABLE_NAME TableName,INDEX_NAME IndexName,COLUMN_NAME ColumnName,CASE WHEN NON_UNIQUE=0 THEN 1 ELSE 0 END is_unique,
         CASE WHEN INDEX_NAME='PRIMARY' THEN 1 ELSE 0 END is_primary_key, CASE WHEN INDEX_TYPE="FULLTEXT" THEN 1 ELSE 0 END is_fulltext
         FROM information_schema.statistics sta
-        WHERE table_schema IN (${MysqlDriver.buildEscapedObjectList(
-            dbNames
-        )})`);
+        WHERE table_schema = ${dbName}`);
         /* eslint-enable camelcase */
         entities.forEach((ent) => {
             const entityIndices = response.filter(
@@ -361,7 +355,7 @@ export default class MysqlDriver extends AbstractDriver {
     public async GetRelations(
         entities: Entity[],
         schemas: string[],
-        dbNames: string[],
+        dbName: string,
     ): Promise<Entity[]> {
         const response = await this.ExecQuery<{
             TableWithForeignKey: string;
@@ -389,7 +383,7 @@ export default class MysqlDriver extends AbstractDriver {
             INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS RC
                 ON CU.CONSTRAINT_NAME=RC.CONSTRAINT_NAME AND CU.CONSTRAINT_SCHEMA = RC.CONSTRAINT_SCHEMA
           WHERE
-            TABLE_SCHEMA IN (${MysqlDriver.buildEscapedObjectList(dbNames)})
+            TABLE_SCHEMA = ${dbName}
             AND CU.REFERENCED_TABLE_NAME IS NOT NULL;
             `);
         const relationsTemp: RelationInternal[] = [] as RelationInternal[];
@@ -452,7 +446,7 @@ export default class MysqlDriver extends AbstractDriver {
     }
 
     public async ConnectToServer(connectionOptons: IConnectionOptions) {
-        const databaseName = connectionOptons.databaseNames[0];
+        const databaseName = connectionOptons.databaseName;
         let config: MYSQL.ConnectionOptions;
         if (connectionOptons.ssl) {
             config = {
@@ -508,16 +502,9 @@ export default class MysqlDriver extends AbstractDriver {
         await promise;
     }
 
-    public async CreateDB(dbName: string) {
-        await this.ExecQuery(`CREATE DATABASE \`${dbName}\`; `);
-    }
 
     public async UseDB(dbName: string) {
         await this.ExecQuery(`USE \`${dbName}\`; `);
-    }
-
-    public async DropDB(dbName: string) {
-        await this.ExecQuery(`DROP DATABASE \`${dbName}\`; `);
     }
 
     public async CheckIfDBExists(dbName: string): Promise<boolean> {

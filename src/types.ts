@@ -1,7 +1,7 @@
 export interface IConnectionOptions {
     host: string;
     port: number;
-    databaseNames: string[];
+    databaseName: string;
     user: string;
     password: string;
     databaseType:

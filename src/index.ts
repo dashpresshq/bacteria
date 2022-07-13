@@ -17,7 +17,7 @@ const option : IConnectionOptions = {
     host: "localhost",
     password: "password",
     schemaNames: ['public'],
-    databaseNames: ["kademiks"],
+    databaseName: "kademiks",
     port: 5432,
     ssl: false,
     onlyTables: [],

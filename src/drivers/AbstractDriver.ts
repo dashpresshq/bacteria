@@ -163,23 +163,23 @@ export default abstract class AbstractDriver {
         await this.ConnectToServer(connectionOptions);
         dbModel = await this.GetAllTables(
             connectionOptions.schemaNames,
-            connectionOptions.databaseNames
+            connectionOptions.databaseName
         );
         await this.GetCoulmnsFromEntity(
             dbModel,
             connectionOptions.schemaNames,
-            connectionOptions.databaseNames
+            connectionOptions.databaseName
         );
         await this.GetIndexesFromEntity(
             dbModel,
             connectionOptions.schemaNames,
-            connectionOptions.databaseNames
+            connectionOptions.databaseName
         );
         AbstractDriver.FindPrimaryColumnsFromIndexes(dbModel);
         dbModel = await this.GetRelations(
             dbModel,
             connectionOptions.schemaNames,
-            connectionOptions.databaseNames,
+            connectionOptions.databaseName,
         );
         await this.DisconnectFromServer();
         dbModel = AbstractDriver.FindManyToManyRelations(dbModel);
@@ -211,7 +211,7 @@ export default abstract class AbstractDriver {
 
     public abstract GetAllTables(
         schemas: string[],
-        dbNames: string[]
+        dbName: string
     ): Promise<Entity[]>;
 
     public static GetRelationsFromRelationTempInfo(
@@ -359,19 +359,19 @@ export default abstract class AbstractDriver {
     public abstract GetCoulmnsFromEntity(
         entities: Entity[],
         schemas: string[],
-        dbNames: string[]
+        dbNames: string
     ): Promise<Entity[]>;
 
     public abstract GetIndexesFromEntity(
         entities: Entity[],
         schemas: string[],
-        dbNames: string[]
+        dbNames: string
     ): Promise<Entity[]>;
 
     public abstract GetRelations(
         entities: Entity[],
         schemas: string[],
-        dbNames: string[],
+        dbNames: string,
     ): Promise<Entity[]>;
 
     public static FindPrimaryColumnsFromIndexes(dbModel: Entity[]) {
@@ -403,10 +403,6 @@ export default abstract class AbstractDriver {
     }
 
     public abstract DisconnectFromServer(): Promise<void>;
-
-    public abstract CreateDB(dbName: string): Promise<void>;
-
-    public abstract DropDB(dbName: string): Promise<void>;
 
     public abstract CheckIfDBExists(dbName: string): Promise<boolean>;
 
