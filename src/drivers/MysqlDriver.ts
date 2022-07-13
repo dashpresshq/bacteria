@@ -1,5 +1,5 @@
 import type * as MYSQL from "mysql2";
-import * as TomgUtils from "../utils";
+import { LogError } from "../utils";
 import AbstractDriver from "./AbstractDriver";
 import { Entity } from "../models/Entity";
 import { Column } from "../models/Column";
@@ -26,7 +26,7 @@ export default class MysqlDriver extends AbstractDriver {
             // eslint-disable-next-line import/no-extraneous-dependencies, global-require, import/no-unresolved
             this.MYSQL = require("mysql2");
         } catch (error) {
-            TomgUtils.LogError("", false, error);
+            LogError("", false, error);
             throw error;
         }
     }
@@ -251,7 +251,7 @@ export default class MysqlDriver extends AbstractDriver {
                             break;
                         default:
                             tscType = "NonNullable<unknown>";
-                            TomgUtils.LogError(
+                            LogError(
                                 `Unknown column type: ${resp.DATA_TYPE}  table name: ${resp.TABLE_NAME} column name: ${resp.COLUMN_NAME}`
                             );
                             break;
@@ -395,7 +395,7 @@ export default class MysqlDriver extends AbstractDriver {
             );
 
             if (!ownerTable || !relatedTable) {
-                TomgUtils.LogError(
+                LogError(
                     `Relation between tables ${rows[0].TableWithForeignKey} and ${rows[0].TableReferenced} wasn't found in entity model.`,
                     true
                 );
@@ -427,7 +427,7 @@ export default class MysqlDriver extends AbstractDriver {
                 if (!err) {
                     resolve(true);
                 } else {
-                    TomgUtils.LogError(
+                    LogError(
                         `Error disconnecting from ${this.EngineName} Server.`,
                         false,
                         err.message
@@ -485,7 +485,7 @@ export default class MysqlDriver extends AbstractDriver {
                 if (!err) {
                     resolve(true);
                 } else {
-                    TomgUtils.LogError(
+                    LogError(
                         `Error connecting to ${this.EngineName} Server.`,
                         false,
                         err.message

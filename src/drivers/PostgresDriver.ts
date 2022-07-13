@@ -1,5 +1,5 @@
 import type * as PG from "pg";
-import * as TomgUtils from "../utils";
+import { LogError } from "../utils";
 import AbstractDriver from "./AbstractDriver";
 import {IConnectionOptions} from "../types";
 import { Entity } from "../models/Entity";
@@ -24,7 +24,7 @@ export default class PostgresDriver extends AbstractDriver {
             // eslint-disable-next-line import/no-extraneous-dependencies, global-require, import/no-unresolved
             this.PG = require("pg");
         } catch (error) {
-            TomgUtils.LogError("", false, error);
+            LogError("", false, error);
             throw error;
         }
     }
@@ -137,11 +137,11 @@ export default class PostgresDriver extends AbstractDriver {
                             resp.data_type === "USER-DEFINED" ||
                             resp.data_type === "ARRAY"
                         ) {
-                            TomgUtils.LogError(
+                            LogError(
                                 `Unknown ${resp.data_type} column type: ${resp.udt_name} table name: ${resp.table_name} column name: ${resp.column_name}`
                             );
                         } else {
-                            TomgUtils.LogError(
+                            LogError(
                                 `Unknown column type: ${resp.data_type} table name: ${resp.table_name} column name: ${resp.column_name}`
                             );
                         }
@@ -573,7 +573,7 @@ export default class PostgresDriver extends AbstractDriver {
                 (v) => v.name === rows[0].tablereferenced
             );
             if (!ownerTable || !relatedTable) {
-                TomgUtils.LogError(
+                LogError(
                     `Relation between tables ${rows[0].tablewithforeignkey} and ${rows[0].tablereferenced} wasn't found in entity model.`,
                     true
                 );
@@ -606,7 +606,7 @@ export default class PostgresDriver extends AbstractDriver {
                     if (!err) {
                         resolve(true);
                     } else {
-                        TomgUtils.LogError(
+                        LogError(
                             "Error disconnecting from to Postgres Server.",
                             false,
                             err.message
@@ -635,7 +635,7 @@ export default class PostgresDriver extends AbstractDriver {
                 if (!err) {
                     resolve(true);
                 } else {
-                    TomgUtils.LogError(
+                    LogError(
                         "Error connecting to Postgres Server.",
                         false,
                         err.message

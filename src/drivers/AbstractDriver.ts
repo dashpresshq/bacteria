@@ -1,9 +1,10 @@
-import * as TomgUtils from "../utils";
+import { LogError } from "../utils";
 import { Entity } from "../models/Entity";
 import { RelationInternal } from "../models/RelationInternal";
 import { Relation } from "../models/Relation";
 import { Column } from "../models/Column";
 import { IConnectionOptions } from "../types";
+import * as changeCase from "change-case";
 
 export default abstract class AbstractDriver {
     public abstract standardPort: number;
@@ -104,11 +105,11 @@ export default abstract class AbstractDriver {
             firstRelation.relatedTable = secondEntity.name;
             secondRelation.relatedTable = firstEntity.name;
 
-            firstRelation.fieldName = TomgUtils.findNameForNewField(
+            firstRelation.fieldName = AbstractDriver.findNameForNewField(
                 secondEntity.name,
                 firstEntity
             );
-            secondRelation.fieldName = TomgUtils.findNameForNewField(
+            secondRelation.fieldName = AbstractDriver.findNameForNewField(
                 firstEntity.name,
                 secondEntity
             );
@@ -200,7 +201,7 @@ export default abstract class AbstractDriver {
                 (entity) => entity.name === relationTmp.ownerTable.name
             );
             if (!ownerEntity) {
-                TomgUtils.LogError(
+                LogError(
                     `Relation between tables ${relationTmp.ownerTable.name} and ${relationTmp.relatedTable.name} didn't found entity model ${relationTmp.ownerTable.name}.`
                 );
                 return;
@@ -209,7 +210,7 @@ export default abstract class AbstractDriver {
                 (entity) => entity.name === relationTmp.relatedTable.name
             );
             if (!referencedEntity) {
-                TomgUtils.LogError(
+                LogError(
                     `Relation between tables ${relationTmp.ownerTable.name} and ${relationTmp.relatedTable.name} didn't found entity model ${relationTmp.relatedTable.name}.`
                 );
                 return;
@@ -228,7 +229,7 @@ export default abstract class AbstractDriver {
                         relationTmp.ownerColumns[relationColumnIndex]
                 );
                 if (!ownerColumn) {
-                    TomgUtils.LogError(
+                    LogError(
                         `Relation between tables ${relationTmp.ownerTable.name} and ${relationTmp.relatedTable.name} didn't found entity column ${relationTmp.ownerTable.name}.${ownerColumn}.`
                     );
                     return;
@@ -239,7 +240,7 @@ export default abstract class AbstractDriver {
                         relationTmp.relatedColumns[relationColumnIndex]
                 );
                 if (!relatedColumn) {
-                    TomgUtils.LogError(
+                    LogError(
                         `Relation between tables ${relationTmp.ownerTable.name} and ${relationTmp.relatedTable.name} didn't found entity column ${relationTmp.relatedTable.name}.${relatedColumn}.`
                     );
                     return;
@@ -267,12 +268,12 @@ export default abstract class AbstractDriver {
             });
             let fieldName = "";
             if (ownerColumns.length === 1) {
-                fieldName = TomgUtils.findNameForNewField(
+                fieldName = AbstractDriver.findNameForNewField(
                     ownerColumns[0].tscName,
                     ownerEntity
                 );
             } else {
-                fieldName = TomgUtils.findNameForNewField(
+                fieldName = AbstractDriver.findNameForNewField(
                     relationTmp.relatedTable.name,
                     ownerEntity
                 );
@@ -280,7 +281,7 @@ export default abstract class AbstractDriver {
 
             const ownerRelation: Relation = {
                 fieldName,
-                relatedField: TomgUtils.findNameForNewField(
+                relatedField: AbstractDriver.findNameForNewField(
                     relationTmp.ownerTable.name,
                     relationTmp.relatedTable
                 ),
@@ -307,7 +308,7 @@ export default abstract class AbstractDriver {
 
             if (ownerColumns.length === 1) {
                 let relationIdFieldName = "";
-                relationIdFieldName = TomgUtils.findNameForNewField(
+                relationIdFieldName = AbstractDriver.findNameForNewField(
                     ownerColumns[0].tscName,
                     ownerEntity
                 );
@@ -351,6 +352,49 @@ export default abstract class AbstractDriver {
         dbNames: string,
     ): Promise<Entity[]>;
 
+    public static findNameForNewField(
+        _fieldName: string,
+        entity: Entity,
+        columnOldName = ""
+    ): string {
+        let fieldName = _fieldName;
+        const validNameCondition = () =>
+            (entity.columns.every(
+                (v) =>
+                    changeCase.camelCase(v.tscName) !==
+                    changeCase.camelCase(fieldName)
+            ) &&
+                entity.relations.every(
+                    (v) =>
+                        changeCase.camelCase(v.fieldName) !==
+                        changeCase.camelCase(fieldName)
+                ) &&
+                entity.relationIds.every(
+                    (v) =>
+                        changeCase.camelCase(v.fieldName) !==
+                        changeCase.camelCase(fieldName)
+                )) ||
+            (columnOldName &&
+                changeCase.camelCase(columnOldName) ===
+                    changeCase.camelCase(fieldName));
+        if (!validNameCondition()) {
+            fieldName += "_";
+            for (
+                let i = 2;
+                i <= entity.columns.length + entity.relations.length;
+                i++
+            ) {
+                fieldName =
+                    fieldName.substring(0, fieldName.length - i.toString().length) +
+                    i.toString();
+                if (validNameCondition()) {
+                    break;
+                }
+            }
+        }
+        return fieldName;
+    }
+
     public static FindPrimaryColumnsFromIndexes(dbModel: Entity[]) {
         dbModel.forEach((entity) => {
             const primaryIndex = entity.indices.find((v) => v.primary);
@@ -374,7 +418,7 @@ export default abstract class AbstractDriver {
                     return !!v.primary;
                 })
             ) {
-                TomgUtils.LogError(`Table ${entity.name} has no PK.`, false);
+                LogError(`Table ${entity.name} has no PK.`, false);
             }
         });
     }

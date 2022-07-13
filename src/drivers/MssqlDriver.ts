@@ -1,5 +1,5 @@
 import type * as MSSQL from "mssql";
-import * as TomgUtils from "../utils";
+import { LogError } from "../utils";
 import AbstractDriver from "./AbstractDriver";
 import { Entity } from "../models/Entity";
 import { Column } from "../models/Column";
@@ -25,7 +25,7 @@ export default class MssqlDriver extends AbstractDriver {
             // eslint-disable-next-line import/no-extraneous-dependencies, global-require, import/no-unresolved
             this.MSSQL = require("mssql");
         } catch (error) {
-            TomgUtils.LogError("", false, error);
+            LogError("", false, error);
             throw error;
         }
     }
@@ -215,7 +215,7 @@ export default class MssqlDriver extends AbstractDriver {
                             break;
                         default:
                             tscType = "NonNullable<unknown>";
-                            TomgUtils.LogError(
+                            LogError(
                                 `Unknown column type: ${resp.DATA_TYPE}  table name: ${resp.TABLE_NAME} column name: ${resp.COLUMN_NAME}`
                             );
                             break;
@@ -401,7 +401,7 @@ export default class MssqlDriver extends AbstractDriver {
                 (v) => v.name === rows[0].TableReferenced
             );
             if (!ownerTable || !relatedTable) {
-                TomgUtils.LogError(
+                LogError(
                     `Relation between tables ${rows[0].TableWithForeignKey} and ${rows[0].TableReferenced} wasn't found in entity model.`,
                     true
                 );
@@ -454,7 +454,7 @@ export default class MssqlDriver extends AbstractDriver {
                 if (!err) {
                     resolve(true);
                 } else {
-                    TomgUtils.LogError(
+                    LogError(
                         "Error connecting to MSSQL Server.",
                         false,
                         err.message

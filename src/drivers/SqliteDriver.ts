@@ -1,5 +1,5 @@
 import type * as sqliteLib from "sqlite3";
-import * as TomgUtils from "../utils";
+import { LogError } from "../utils";
 import AbstractDriver from "./AbstractDriver";
 import { Entity } from "../models/Entity";
 import { Column } from "../models/Column";
@@ -31,7 +31,7 @@ export default class SqliteDriver extends AbstractDriver {
             this.sqliteLib = require("sqlite3");
             this.sqlite = this.sqliteLib.verbose();
         } catch (error) {
-            TomgUtils.LogError("", false, error);
+            LogError("", false, error);
             throw error;
         }
     }
@@ -172,7 +172,7 @@ export default class SqliteDriver extends AbstractDriver {
                             break;
                         default:
                             tscType = "NonNullable<unknown>";
-                            TomgUtils.LogError(
+                            LogError(
                                 `Unknown column type: ${columnType}  table name: ${ent.name} column name: ${resp.name}`
                             );
                             break;
@@ -333,7 +333,7 @@ export default class SqliteDriver extends AbstractDriver {
                         (v) => v.name === rows[0].table
                     );
                     if (!ownerTable || !relatedTable) {
-                        TomgUtils.LogError(
+                        LogError(
                             `Relation between tables ${entity.name} and ${rows[0].table} wasn't found in entity model.`,
                             true
                         );
@@ -372,7 +372,7 @@ export default class SqliteDriver extends AbstractDriver {
                 connectionOptons.databaseName,
                 (err: Error) => {
                     if (err) {
-                        TomgUtils.LogError(
+                        LogError(
                             "Error connecting to SQLite database.",
                             false,
                             err.message
@@ -401,7 +401,7 @@ export default class SqliteDriver extends AbstractDriver {
                         ret = row;
                         resolve(true);
                     } else {
-                        TomgUtils.LogError(
+                        LogError(
                             "Error executing query on SQLite.",
                             false,
                             err.message

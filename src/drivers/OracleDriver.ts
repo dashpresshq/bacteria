@@ -1,6 +1,6 @@
 // eslint-disable-next-line import/no-extraneous-dependencies, import/no-unresolved
 import type * as Oracle from "oracledb";
-import * as TomgUtils from "../utils";
+import { LogError }  from "../utils";
 import AbstractDriver from "./AbstractDriver";
 import {IConnectionOptions} from "../types";
 import { Entity } from "../models/Entity";
@@ -26,7 +26,7 @@ export default class OracleDriver extends AbstractDriver {
             this.Oracle = require("oracledb");
             this.Oracle.outFormat = (this.Oracle as any).OBJECT;
         } catch (error) {
-            TomgUtils.LogError("", false, error);
+            LogError("", false, error);
             throw error;
         }
     }
@@ -185,7 +185,7 @@ export default class OracleDriver extends AbstractDriver {
                             break;
                         default:
                             tscType = "NonNullable<unknown>";
-                            TomgUtils.LogError(
+                            LogError(
                                 `Unknown column type:${DATA_TYPE}`
                             );
                             break;
@@ -303,7 +303,7 @@ export default class OracleDriver extends AbstractDriver {
             );
 
             if (!ownerTable || !relatedTable) {
-                TomgUtils.LogError(
+                LogError(
                     `Relation between tables ${rows[0].OWNER_TABLE_NAME} and ${rows[0].CHILD_TABLE_NAME} wasn't found in entity model.`,
                     true
                 );
@@ -359,7 +359,7 @@ export default class OracleDriver extends AbstractDriver {
                     this.Connection = connection;
                     resolve(true);
                 } else {
-                    TomgUtils.LogError(
+                    LogError(
                         "Error connecting to Oracle Server.",
                         false,
                         err.message

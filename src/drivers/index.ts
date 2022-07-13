@@ -1,5 +1,5 @@
 import MariaDbDriver from "./MariaDbDriver";
-import OracleDriver from "./OracleDriver";
+// import OracleDriver from "./OracleDriver";
 import SqliteDriver from "./SqliteDriver";
 import PostgresDriver from "./PostgresDriver";
 import MssqlDriver from "./MssqlDriver";
