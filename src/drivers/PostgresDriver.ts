@@ -50,12 +50,8 @@ export default class PostgresDriver extends AbstractDriver {
                 indices: [],
                 relations: [],
                 relationIds: [],
-                sqlName: val.TABLE_NAME,
-                tscName: val.TABLE_NAME,
-                fileName: val.TABLE_NAME,
-                database:  "",
+                name: val.TABLE_NAME,
                 schema: val.TABLE_SCHEMA,
-                fileImports: [],
             });
         });
         return ret;
@@ -111,7 +107,7 @@ export default class PostgresDriver extends AbstractDriver {
         ).rows;
         entities.forEach((ent) => {
             response
-                .filter((filterVal) => filterVal.table_name === ent.tscName)
+                .filter((filterVal) => filterVal.table_name === ent.name)
                 .forEach((resp) => {
                     const tscName = resp.column_name;
                     const options: Column["options"] = {
@@ -480,7 +476,7 @@ export default class PostgresDriver extends AbstractDriver {
         ).rows;
         entities.forEach((ent) => {
             const entityIndices = response.filter(
-                (filterVal) => filterVal.tablename === ent.tscName
+                (filterVal) => filterVal.tablename === ent.name
             );
             const indexNames = new Set(entityIndices.map((v) => v.indexname));
             indexNames.forEach((indexName) => {
@@ -571,10 +567,10 @@ export default class PostgresDriver extends AbstractDriver {
         relationKeys.forEach((relationId) => {
             const rows = response.filter((v) => v.object_id === relationId);
             const ownerTable = entities.find(
-                (v) => v.sqlName === rows[0].tablewithforeignkey
+                (v) => v.name === rows[0].tablewithforeignkey
             );
             const relatedTable = entities.find(
-                (v) => v.sqlName === rows[0].tablereferenced
+                (v) => v.name === rows[0].tablereferenced
             );
             if (!ownerTable || !relatedTable) {
                 TomgUtils.LogError(

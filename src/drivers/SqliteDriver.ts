@@ -51,10 +51,7 @@ export default class SqliteDriver extends AbstractDriver {
                 indices: [],
                 relations: [],
                 relationIds: [],
-                sqlName: val.tbl_name,
-                tscName: val.tbl_name,
-                fileName: val.tbl_name,
-                fileImports: [],
+                name: val.tbl_name,
             });
         });
         return ret;
@@ -71,7 +68,7 @@ export default class SqliteDriver extends AbstractDriver {
                     // eslint-disable-next-line camelcase
                     dflt_value: string;
                     pk: number;
-                }>(`PRAGMA table_info('${ent.tscName}');`);
+                }>(`PRAGMA table_info('${ent.name}');`);
                 response.forEach((resp) => {
                     const tscName = resp.name;
                     let tscType = "";
@@ -88,7 +85,7 @@ export default class SqliteDriver extends AbstractDriver {
                         .trim();
                     const generated =
                         isPrimary &&
-                        this.tablesWithGeneratedPrimaryKey.includes(ent.tscName)
+                        this.tablesWithGeneratedPrimaryKey.includes(ent.name)
                             ? true
                             : undefined;
                     switch (columnType) {
@@ -176,7 +173,7 @@ export default class SqliteDriver extends AbstractDriver {
                         default:
                             tscType = "NonNullable<unknown>";
                             TomgUtils.LogError(
-                                `Unknown column type: ${columnType}  table name: ${ent.tscName} column name: ${resp.name}`
+                                `Unknown column type: ${columnType}  table name: ${ent.name} column name: ${resp.name}`
                             );
                             break;
                     }
@@ -254,7 +251,7 @@ export default class SqliteDriver extends AbstractDriver {
                     unique: number;
                     origin: string;
                     partial: number;
-                }>(`PRAGMA index_list('${ent.tscName}');`);
+                }>(`PRAGMA index_list('${ent.name}');`);
                 await Promise.all(
                     response.map(async (resp) => {
                         const indexColumnsResponse = await this.ExecQuery<{
@@ -321,7 +318,7 @@ export default class SqliteDriver extends AbstractDriver {
                         | "SET NULL"
                         | "NO ACTION";
                     match: string;
-                }>(`PRAGMA foreign_key_list('${entity.tscName}');`);
+                }>(`PRAGMA foreign_key_list('${entity.name}');`);
 
                 const relationsTemp: RelationInternal[] =
                     [] as RelationInternal[];
@@ -330,14 +327,14 @@ export default class SqliteDriver extends AbstractDriver {
                 relationKeys.forEach((relationId) => {
                     const rows = response.filter((v) => v.id === relationId);
                     const ownerTable = entities.find(
-                        (v) => v.sqlName === entity.tscName
+                        (v) => v.name === entity.name
                     );
                     const relatedTable = entities.find(
-                        (v) => v.sqlName === rows[0].table
+                        (v) => v.name === rows[0].table
                     );
                     if (!ownerTable || !relatedTable) {
                         TomgUtils.LogError(
-                            `Relation between tables ${entity.tscName} and ${rows[0].table} wasn't found in entity model.`,
+                            `Relation between tables ${entity.name} and ${rows[0].table} wasn't found in entity model.`,
                             true
                         );
                         return;

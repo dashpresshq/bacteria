@@ -86,37 +86,37 @@ export default abstract class AbstractDriver {
         );
         manyToManyEntities.forEach((junctionEntity) => {
             const firstEntity = dbModel.find(
-                (v) => v.tscName === junctionEntity.relations[0].relatedTable
+                (v) => v.name === junctionEntity.relations[0].relatedTable
             )!;
             const secondEntity = dbModel.find(
-                (v) => v.tscName === junctionEntity.relations[1].relatedTable
+                (v) => v.name === junctionEntity.relations[1].relatedTable
             )!;
 
             const firstRelation = firstEntity.relations.find(
-                (v) => v.relatedTable === junctionEntity.tscName
+                (v) => v.relatedTable === junctionEntity.name
             )!;
             const secondRelation = secondEntity.relations.find(
-                (v) => v.relatedTable === junctionEntity.tscName
+                (v) => v.relatedTable === junctionEntity.name
             )!;
 
             firstRelation.relationType = "ManyToMany";
             secondRelation.relationType = "ManyToMany";
-            firstRelation.relatedTable = secondEntity.tscName;
-            secondRelation.relatedTable = firstEntity.tscName;
+            firstRelation.relatedTable = secondEntity.name;
+            secondRelation.relatedTable = firstEntity.name;
 
             firstRelation.fieldName = TomgUtils.findNameForNewField(
-                secondEntity.tscName,
+                secondEntity.name,
                 firstEntity
             );
             secondRelation.fieldName = TomgUtils.findNameForNewField(
-                firstEntity.tscName,
+                firstEntity.name,
                 secondEntity
             );
             firstRelation.relatedField = secondRelation.fieldName;
             secondRelation.relatedField = firstRelation.fieldName;
 
             firstRelation.joinTableOptions = {
-                name: junctionEntity.sqlName,
+                name: junctionEntity.name,
                 joinColumns: junctionEntity.relations[0].joinColumnOptions!.map(
                     (v, i) => {
                         return {
@@ -137,10 +137,6 @@ export default abstract class AbstractDriver {
                         }
                     ),
             };
-            if (junctionEntity.database) {
-                firstRelation.joinTableOptions.database =
-                    junctionEntity.database;
-            }
             if (junctionEntity.schema) {
                 firstRelation.joinTableOptions.schema = junctionEntity.schema;
             }
@@ -150,7 +146,7 @@ export default abstract class AbstractDriver {
             firstRelation.joinColumnOptions = undefined;
             secondRelation.joinColumnOptions = undefined;
             retVal = retVal.filter((ent) => {
-                return ent.tscName !== junctionEntity.tscName;
+                return ent.name !== junctionEntity.name;
             });
         });
         return retVal;
@@ -161,12 +157,10 @@ export default abstract class AbstractDriver {
     ): Promise<Entity[]> {
         let dbModel = [] as Entity[];
         await this.ConnectToServer(connectionOptions);
-        console.log("connected")
         dbModel = await this.GetAllTables(
             connectionOptions.schemaNames,
             connectionOptions.databaseName
         );
-        console.log("bar");
         await this.GetCoulmnsFromEntity(
             dbModel,
             connectionOptions.schemaNames,
@@ -203,20 +197,20 @@ export default abstract class AbstractDriver {
     ) {
         relationsTemp.forEach((relationTmp) => {
             const ownerEntity = entities.find(
-                (entity) => entity.tscName === relationTmp.ownerTable.tscName
+                (entity) => entity.name === relationTmp.ownerTable.name
             );
             if (!ownerEntity) {
                 TomgUtils.LogError(
-                    `Relation between tables ${relationTmp.ownerTable.sqlName} and ${relationTmp.relatedTable.sqlName} didn't found entity model ${relationTmp.ownerTable.sqlName}.`
+                    `Relation between tables ${relationTmp.ownerTable.name} and ${relationTmp.relatedTable.name} didn't found entity model ${relationTmp.ownerTable.name}.`
                 );
                 return;
             }
             const referencedEntity = entities.find(
-                (entity) => entity.tscName === relationTmp.relatedTable.tscName
+                (entity) => entity.name === relationTmp.relatedTable.name
             );
             if (!referencedEntity) {
                 TomgUtils.LogError(
-                    `Relation between tables ${relationTmp.ownerTable.sqlName} and ${relationTmp.relatedTable.sqlName} didn't found entity model ${relationTmp.relatedTable.sqlName}.`
+                    `Relation between tables ${relationTmp.ownerTable.name} and ${relationTmp.relatedTable.name} didn't found entity model ${relationTmp.relatedTable.name}.`
                 );
                 return;
             }
@@ -235,7 +229,7 @@ export default abstract class AbstractDriver {
                 );
                 if (!ownerColumn) {
                     TomgUtils.LogError(
-                        `Relation between tables ${relationTmp.ownerTable.sqlName} and ${relationTmp.relatedTable.sqlName} didn't found entity column ${relationTmp.ownerTable.sqlName}.${ownerColumn}.`
+                        `Relation between tables ${relationTmp.ownerTable.name} and ${relationTmp.relatedTable.name} didn't found entity column ${relationTmp.ownerTable.name}.${ownerColumn}.`
                     );
                     return;
                 }
@@ -246,7 +240,7 @@ export default abstract class AbstractDriver {
                 );
                 if (!relatedColumn) {
                     TomgUtils.LogError(
-                        `Relation between tables ${relationTmp.ownerTable.sqlName} and ${relationTmp.relatedTable.sqlName} didn't found entity column ${relationTmp.relatedTable.sqlName}.${relatedColumn}.`
+                        `Relation between tables ${relationTmp.ownerTable.name} and ${relationTmp.relatedTable.name} didn't found entity column ${relationTmp.relatedTable.name}.${relatedColumn}.`
                     );
                     return;
                 }
@@ -279,7 +273,7 @@ export default abstract class AbstractDriver {
                 );
             } else {
                 fieldName = TomgUtils.findNameForNewField(
-                    relationTmp.relatedTable.tscName,
+                    relationTmp.relatedTable.name,
                     ownerEntity
                 );
             }
@@ -287,7 +281,7 @@ export default abstract class AbstractDriver {
             const ownerRelation: Relation = {
                 fieldName,
                 relatedField: TomgUtils.findNameForNewField(
-                    relationTmp.ownerTable.tscName,
+                    relationTmp.ownerTable.name,
                     relationTmp.relatedTable
                 ),
                 joinColumnOptions: relationTmp.ownerColumns.map((v, idx) => {
@@ -297,14 +291,14 @@ export default abstract class AbstractDriver {
                     };
                     return retVal;
                 }),
-                relatedTable: relationTmp.relatedTable.tscName,
+                relatedTable: relationTmp.relatedTable.name,
                 relationType: isOneToMany ? "ManyToOne" : "OneToOne",
             };
          
             const relatedRelation: Relation = {
                 fieldName: ownerRelation.relatedField,
                 relatedField: ownerRelation.fieldName,
-                relatedTable: relationTmp.ownerTable.tscName,
+                relatedTable: relationTmp.ownerTable.name,
                 relationType: isOneToMany ? "OneToMany" : "OneToOne",
             };
 
@@ -380,7 +374,7 @@ export default abstract class AbstractDriver {
                     return !!v.primary;
                 })
             ) {
-                TomgUtils.LogError(`Table ${entity.tscName} has no PK.`, false);
+                TomgUtils.LogError(`Table ${entity.name} has no PK.`, false);
             }
         });
     }

@@ -12,27 +12,27 @@ import path = require("path");
 
 import { IConnectionOptions } from "./types";
 
-// const option : IConnectionOptions = {
-//     databaseType: "postgres",
-//     host: "localhost",
-//     password: "password",
-//     schemaNames: ['public'],
-//     databaseName: "kademiks",
-//     port: 5432,
-//     ssl: false,
-//     user: "postgres"
-// };
-
 const option : IConnectionOptions = {
-  databaseType: "mysql",
-  host: "127.0.0.1",
-  password: "password",
-  schemaNames: ['public'],
-  databaseName: "classicmodels",
-  user: "username",
-  port: 3306,
-  ssl: false,
+    databaseType: "postgres",
+    host: "localhost",
+    password: "password",
+    schemaNames: ['public'],
+    databaseName: "kademiks",
+    port: 5432,
+    ssl: false,
+    user: "postgres"
 };
+
+// const option : IConnectionOptions = {
+//   databaseType: "mysql",
+//   host: "127.0.0.1",
+//   password: "password",
+//   schemaNames: ['public'],
+//   databaseName: "classicmodels",
+//   user: "username",
+//   port: 3306,
+//   ssl: false,
+// };
 
 CliLogic(option)
 

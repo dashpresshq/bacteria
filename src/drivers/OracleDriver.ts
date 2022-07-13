@@ -48,12 +48,8 @@ export default class OracleDriver extends AbstractDriver {
                 indices: [],
                 relations: [],
                 relationIds: [],
-                sqlName: val.TABLE_NAME,
-                tscName: val.TABLE_NAME,
-                fileName: val.TABLE_NAME,
-                database: "",
+                name: val.TABLE_NAME,
                 schema: val.TABLE_SCHEMA,
-                fileImports: [],
             });
         });
         return ret;
@@ -80,7 +76,7 @@ export default class OracleDriver extends AbstractDriver {
 
         entities.forEach((ent) => {
             response
-                .filter((filterVal) => filterVal.TABLE_NAME === ent.tscName)
+                .filter((filterVal) => filterVal.TABLE_NAME === ent.name)
                 .forEach((resp) => {
                     const tscName = resp.COLUMN_NAME;
                     const options: Column["options"] = {
@@ -243,7 +239,7 @@ export default class OracleDriver extends AbstractDriver {
 
         entities.forEach((ent) => {
             const entityIndices = response.filter(
-                (filterVal) => filterVal.TABLE_NAME === ent.tscName
+                (filterVal) => filterVal.TABLE_NAME === ent.name
             );
             const indexNames = new Set(entityIndices.map((v) => v.INDEX_NAME));
             indexNames.forEach((indexName) => {
@@ -300,10 +296,10 @@ export default class OracleDriver extends AbstractDriver {
                 (v) => v.CONSTRAINT_NAME === relationId
             );
             const ownerTable = entities.find(
-                (v) => v.sqlName === rows[0].OWNER_TABLE_NAME
+                (v) => v.name === rows[0].OWNER_TABLE_NAME
             );
             const relatedTable = entities.find(
-                (v) => v.sqlName === rows[0].CHILD_TABLE_NAME
+                (v) => v.name === rows[0].CHILD_TABLE_NAME
             );
 
             if (!ownerTable || !relatedTable) {

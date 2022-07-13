@@ -55,12 +55,8 @@ export default class MssqlDriver extends AbstractDriver {
                 indices: [],
                 relations: [],
                 relationIds: [],
-                sqlName: val.TABLE_NAME,
-                tscName: val.TABLE_NAME,
-                fileName: val.TABLE_NAME,
-                database: "",
+                name: val.TABLE_NAME,
                 schema: val.TABLE_SCHEMA,
-                fileImports: [],
             });
         });
         return ret;
@@ -100,7 +96,7 @@ export default class MssqlDriver extends AbstractDriver {
             response
                 .filter((filterVal) => {
                     return (
-                        filterVal.TABLE_NAME === ent.tscName &&
+                        filterVal.TABLE_NAME === ent.name &&
                         filterVal.TABLE_SCHEMA === ent.schema
                     );
                 })
@@ -306,7 +302,7 @@ export default class MssqlDriver extends AbstractDriver {
         entities.forEach((ent) => {
             const entityIndices = response.filter(
                 (filterVal) =>
-                    filterVal.TableName === ent.tscName &&
+                    filterVal.TableName === ent.name &&
                     filterVal.TableSchema === ent.schema
             );
             const indexNames = new Set(entityIndices.map((v) => v.IndexName));
@@ -399,10 +395,10 @@ export default class MssqlDriver extends AbstractDriver {
         relationKeys.forEach((relationId) => {
             const rows = response.filter((v) => v.objectId === relationId);
             const ownerTable = entities.find(
-                (v) => v.sqlName === rows[0].TableWithForeignKey
+                (v) => v.name === rows[0].TableWithForeignKey
             );
             const relatedTable = entities.find(
-                (v) => v.sqlName === rows[0].TableReferenced
+                (v) => v.name === rows[0].TableReferenced
             );
             if (!ownerTable || !relatedTable) {
                 TomgUtils.LogError(

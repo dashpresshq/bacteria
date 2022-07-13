@@ -53,12 +53,8 @@ export default class MysqlDriver extends AbstractDriver {
                 indices: [],
                 relations: [],
                 relationIds: [],
-                sqlName: val.TABLE_NAME,
-                tscName: val.TABLE_NAME,
-                fileName: val.TABLE_NAME,
-                database: "",
+                name: val.TABLE_NAME,
                 schema: val.TABLE_SCHEMA,
-                fileImports: [],
             });
         });
         return ret;
@@ -89,7 +85,7 @@ export default class MysqlDriver extends AbstractDriver {
 			order by ordinal_position`);
         entities.forEach((ent) => {
             response
-                .filter((filterVal) => filterVal.TABLE_NAME === ent.tscName)
+                .filter((filterVal) => filterVal.TABLE_NAME === ent.name)
                 .forEach((resp) => {
                     const tscName = resp.COLUMN_NAME;
                     let tscType = "";
@@ -324,7 +320,7 @@ export default class MysqlDriver extends AbstractDriver {
         /* eslint-enable camelcase */
         entities.forEach((ent) => {
             const entityIndices = response.filter(
-                (filterVal) => filterVal.TableName === ent.tscName
+                (filterVal) => filterVal.TableName === ent.name
             );
             const indexNames = new Set(entityIndices.map((v) => v.IndexName));
             indexNames.forEach((indexName) => {
@@ -392,10 +388,10 @@ export default class MysqlDriver extends AbstractDriver {
         relationKeys.forEach((relationId) => {
             const rows = response.filter((v) => v.object_id === relationId);
             const ownerTable = entities.find(
-                (v) => v.sqlName === rows[0].TableWithForeignKey
+                (v) => v.name === rows[0].TableWithForeignKey
             );
             const relatedTable = entities.find(
-                (v) => v.sqlName === rows[0].TableReferenced
+                (v) => v.name === rows[0].TableReferenced
             );
 
             if (!ownerTable || !relatedTable) {
