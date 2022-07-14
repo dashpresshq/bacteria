@@ -421,9 +421,9 @@ export default class MssqlDriver extends AbstractDriver {
   }
 
   public async ConnectToServer(connectionOptons: IConnectionOptions) {
-    const { databaseName } = connectionOptons;
+    const { database } = connectionOptons;
     const config: MSSQL.config = {
-      database: databaseName,
+      database,
       options: {
         appName: "adminator",
         encrypt: connectionOptons.ssl,

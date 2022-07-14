@@ -321,7 +321,7 @@ export default class OracleDriver extends AbstractDriver {
     let config: Oracle.ConnectionAttributes;
     if (connectionOptions.user === String(process.env.ORACLE_UsernameSys)) {
       config = {
-        connectString: `${connectionOptions.host}:${connectionOptions.port}/${connectionOptions.databaseName}`,
+        connectString: `${connectionOptions.host}:${connectionOptions.port}/${connectionOptions.database}`,
         externalAuth: connectionOptions.ssl,
         password: connectionOptions.password,
         privilege: this.Oracle.SYSDBA,
@@ -329,7 +329,7 @@ export default class OracleDriver extends AbstractDriver {
       };
     } else {
       config = {
-        connectString: `${connectionOptions.host}:${connectionOptions.port}/${connectionOptions.databaseName}`,
+        connectString: `${connectionOptions.host}:${connectionOptions.port}/${connectionOptions.database}`,
         externalAuth: connectionOptions.ssl,
         password: connectionOptions.password,
         user: connectionOptions.user,

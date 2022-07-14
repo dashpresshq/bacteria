@@ -430,11 +430,11 @@ export default class MysqlDriver extends AbstractDriver {
   }
 
   public async ConnectToServer(connectionOptons: IConnectionOptions) {
-    const { databaseName } = connectionOptons;
+    const { database } = connectionOptons;
     let config: MYSQL.ConnectionOptions;
     if (connectionOptons.ssl) {
       config = {
-        database: databaseName,
+        database,
         host: connectionOptons.host,
         password: connectionOptons.password,
         port: connectionOptons.port,
@@ -446,7 +446,7 @@ export default class MysqlDriver extends AbstractDriver {
       };
     } else {
       config = {
-        database: databaseName,
+        database,
         host: connectionOptons.host,
         password: connectionOptons.password,
         port: connectionOptons.port,

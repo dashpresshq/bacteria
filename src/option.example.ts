@@ -6,7 +6,7 @@ export const option: IConnectionOptions = {
   host: "localhost",
   password: "password",
   schemaNames: ["public"],
-  databaseName: "my_database",
+  database: "my_database",
   port: 5432,
   ssl: false,
 };

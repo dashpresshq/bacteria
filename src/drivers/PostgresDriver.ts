@@ -606,7 +606,7 @@ export default class PostgresDriver extends AbstractDriver {
 
   public async ConnectToServer(connectionOptons: IConnectionOptions) {
     this.Connection = new this.PG.Client({
-      database: connectionOptons.databaseName,
+      database: connectionOptons.database,
       host: connectionOptons.host,
       password: connectionOptons.password,
       port: connectionOptons.port,

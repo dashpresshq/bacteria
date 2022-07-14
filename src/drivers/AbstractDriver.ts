@@ -149,23 +149,23 @@ export default abstract class AbstractDriver {
     await this.ConnectToServer(connectionOptions);
     dbModel = await this.GetAllTables(
       connectionOptions.schemaNames,
-      connectionOptions.databaseName
+      connectionOptions.database
     );
     await this.GetCoulmnsFromEntity(
       dbModel,
       connectionOptions.schemaNames,
-      connectionOptions.databaseName
+      connectionOptions.database
     );
     await this.GetIndexesFromEntity(
       dbModel,
       connectionOptions.schemaNames,
-      connectionOptions.databaseName
+      connectionOptions.database
     );
     AbstractDriver.FindPrimaryColumnsFromIndexes(dbModel);
     dbModel = await this.GetRelations(
       dbModel,
       connectionOptions.schemaNames,
-      connectionOptions.databaseName
+      connectionOptions.database
     );
     await this.DisconnectFromServer();
     dbModel = AbstractDriver.FindManyToManyRelations(dbModel);

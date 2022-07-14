@@ -337,7 +337,7 @@ export default class SqliteDriver extends AbstractDriver {
   public async ConnectToServer(connectionOptons: IConnectionOptions) {
     const promise = new Promise<void>((resolve, reject) => {
       this.db = new this.sqlite.Database(
-        connectionOptons.databaseName,
+        connectionOptons.database,
         (err: Error | null) => {
           if (err) {
             LogError(

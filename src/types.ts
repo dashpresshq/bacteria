@@ -1,9 +1,10 @@
 export interface IConnectionOptions {
   host: string;
   port: number;
-  databaseName: string;
+  database: string;
   user: string;
   password: string;
+  ssl: boolean;
   databaseType:
     | "mssql"
     | "postgres"
@@ -13,5 +14,4 @@ export interface IConnectionOptions {
     | "sqlite";
   schemaNames: string[];
   instanceName?: string;
-  ssl: boolean;
 }
