@@ -1,9 +1,9 @@
 export type Column = {
   tscType: string;
   tscName: string;
-  type: string; // TODO: remove ?
-  isUsedInRelationAsOwner?: true; // TODO: move to separate object/calulate when us
-  isUsedInRelationAsReferenced?: true; // TODO: move to separate object/calulate when us
+  type: string;
+  isUsedInRelationAsOwner?: true;
+  isUsedInRelationAsReferenced?: true;
 
   primary?: boolean;
   generated?: true | "increment" | "uuid";

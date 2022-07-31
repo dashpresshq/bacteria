@@ -1,7 +1,8 @@
+/* eslint-disable no-console */
 export function LogError(
   errText: string,
   isABug = true,
-  passedError?: string | ErrorConstructor | unknown
+  passedError: string | ErrorConstructor | unknown = {}
 ): void {
   let errObject = passedError;
   console.error(errText);

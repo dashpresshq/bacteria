@@ -1,3 +1,5 @@
+/* eslint-disable no-plusplus */
+/* eslint-disable no-param-reassign */
 import * as changeCase from "change-case";
 import { LogError } from "../utils";
 import { Entity } from "../models/Entity";
@@ -315,7 +317,6 @@ export default abstract class AbstractDriver {
           fieldType,
           relationField: ownerRelation.fieldName,
         });
-        // TODO: RelationId on ManyToMany
       }
     });
     return entities;
