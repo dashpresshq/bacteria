@@ -1,6 +1,6 @@
 {
-  "name": "bacteria",
-  "version": "0.1.3",
+  "name": "@adminator/bacteria",
+  "version": "0.1.4",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -40,7 +40,7 @@
     "sqlite3": "^5.0.8"
   },
   "devDependencies": {
-    "@adminator/eslint-config": "git+https://github.com/adminatorhq/eslint-config.git#c002cdbbc8097daa41ae09e9927f41e2ad90babd",
+    "@adminator/eslint-config": "git+https://github.com/adminatorhq/eslint-config.git#fa543075dfc90bd210834a53c16ecb6775ee781f",
     "@size-limit/preset-small-lib": "^7.0.8",
     "@typescript-eslint/eslint-plugin": "^5.31.0",
     "@typescript-eslint/parser": "^5.31.0",
