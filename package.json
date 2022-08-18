@@ -36,7 +36,7 @@
     "sqlite3": "^5.0.8"
   },
   "devDependencies": {
-    "@adminator/eslint-config": "git+https://github.com/adminatorhq/eslint-config.git#fa543075dfc90bd210834a53c16ecb6775ee781f",
+    "@adminator/eslint-config": "^0.1.8",
     "@typescript-eslint/eslint-plugin": "^5.31.0",
     "@typescript-eslint/parser": "^5.31.0",
     "eslint": "^8.2.0",

@@ -2,9 +2,10 @@
 # yarn lockfile v1
 
 
-"@adminator/eslint-config@git+https://github.com/adminatorhq/eslint-config.git#fa543075dfc90bd210834a53c16ecb6775ee781f":
+"@adminator/eslint-config@^0.1.8":
   version "0.1.8"
-  resolved "git+https://github.com/adminatorhq/eslint-config.git#fa543075dfc90bd210834a53c16ecb6775ee781f"
+  resolved "https://registry.yarnpkg.com/@adminator/eslint-config/-/eslint-config-0.1.8.tgz#6da44895712480c1c355dff08a9b70ad43122d67"
+  integrity sha512-OTHu6l7KUG2MXGfqn1ha56FdCaZrjVg2YN0G2lqyxyT6RffNKAahAB3qmJOMWI+1VQpXWA3bByaVaqgf0nRrhA==
   dependencies:
     "@typescript-eslint/eslint-plugin" "^5.30.5"
     "@typescript-eslint/parser" "^5.30.5"
