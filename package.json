@@ -7,8 +7,7 @@
   "author": "Ayobami Akingbade",
   "module": "dist/bacteria.esm.js",
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "test": "jest --detectOpenHandles --runInBand",
