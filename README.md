@@ -1,6 +1,6 @@
 # Bacteria
 
-Bacteria is the DB introspection package for Adminator
+Bacteria is the DB introspection package for Hadmean
 
 Supports
  - MySQL/MariaDB

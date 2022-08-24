@@ -425,7 +425,7 @@ export default class MssqlDriver extends AbstractDriver {
     const config: MSSQL.config = {
       database,
       options: {
-        appName: "adminator",
+        appName: "hadmean",
         encrypt: connectionOptons.ssl,
         instanceName: connectionOptons.instanceName,
       },
