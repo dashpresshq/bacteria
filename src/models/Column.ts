@@ -7,18 +7,18 @@ export type Column = {
 
   primary?: boolean;
   generated?: true | "increment" | "uuid";
-  default?: string; // ?
+  default?: string;
   options: {
     name: string;
     length?: number;
     width?: number;
     nullable?: boolean;
-    unique?: boolean; // ?
+    unique?: boolean;
     precision?: number;
     scale?: number;
     unsigned?: boolean;
     enum?: string[];
-    array?: boolean; // ?
+    array?: boolean;
     comment?: string;
   };
 };
