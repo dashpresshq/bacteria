@@ -1131,10 +1131,10 @@
   resolved "https://registry.yarnpkg.com/@gar/promisify/-/promisify-1.1.3.tgz#555193ab2e3bb3b6adc3d551c9c030d9e860daf6"
   integrity sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==
 
-"@hadmean/eslint-config@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@hadmean/eslint-config/-/eslint-config-1.0.0.tgz#be2f85f0ddad8f740d7700f457ef25ac93f0330b"
-  integrity sha512-siNDMEY+LjkuOYwtZFDsxOWj7Sft7pX9/iPhI++XF6NpST22EQqrlIUfZ4gHuw9FQ/kYysVQPErskgcQgbshqA==
+"@hadmean/eslint-config@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@hadmean/eslint-config/-/eslint-config-1.0.2.tgz#051468d4c2ae3ae43f8a87076e7000e84245d639"
+  integrity sha512-XxjDviq1+mo6CXrBqWWx1E8Js/LwxQ9mkVZnEzdr8YlL6bGIdTBgJL/VWRKY5Ql9L7xKE5EKB7PsbfJ+15A6+Q==
   dependencies:
     "@typescript-eslint/eslint-plugin" "^5.30.5"
     "@typescript-eslint/parser" "^5.30.5"
