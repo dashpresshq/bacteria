@@ -1,7 +1,7 @@
 import { IConnectionOptions } from "./types";
 
 export const option: IConnectionOptions = {
-  databaseType: "postgres",
+  dataSourceType: "postgres",
   user: "postgres",
   host: "localhost",
   password: "password",

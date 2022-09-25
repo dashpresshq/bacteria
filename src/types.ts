@@ -5,7 +5,7 @@ export interface IConnectionOptions {
   user: string;
   password: string;
   ssl: boolean;
-  databaseType:
+  dataSourceType:
     | "mssql"
     | "postgres"
     | "mysql"
