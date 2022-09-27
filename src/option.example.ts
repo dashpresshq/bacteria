@@ -1,7 +1,7 @@
-import { IConnectionOptions } from "./types";
+import { IRDMSConnectionOptions, RDMSSources } from "./types";
 
-export const option: IConnectionOptions = {
-  dataSourceType: "postgres",
+export const option: IRDMSConnectionOptions = {
+  dataSourceType: RDMSSources.Postgres,
   user: "postgres",
   host: "localhost",
   password: "password",
