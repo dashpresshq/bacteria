@@ -1,50 +1,37 @@
-import type * as MYSQL from "mysql2";
 import { LogError } from "../utils";
 import AbstractDriver from "./AbstractDriver";
 import { Entity } from "../models/Entity";
 import { Column } from "../models/Column";
 import { Index } from "../models/Index";
 import { RelationInternal } from "../models/RelationInternal";
-import { IConnectionOptions } from "../types";
+import {
+  COLUMN_TYPES_WITH_LENGTH,
+  COLUMN_TYPES_WITH_PRECISION,
+  COLUMN_TYPES_WITH_WIDTH,
+} from "./_constants";
+import { IRDMSConnectionOptions } from "../types";
 
 export default class MysqlDriver extends AbstractDriver {
-  public readonly EngineName: string = "MySQL";
-
-  private MYSQL: typeof MYSQL;
-
-  private Connection: MYSQL.Connection | undefined;
-
-  public constructor() {
-    super();
-    try {
-      // eslint-disable-next-line import/no-extraneous-dependencies, global-require, import/no-unresolved
-      this.MYSQL = require("mysql2");
-    } catch (error) {
-      LogError("", false, error);
-      throw error;
-    }
+  constructor(connectionOptions: IRDMSConnectionOptions) {
+    super(connectionOptions);
   }
 
-  getConnection(): MYSQL.Connection {
-    if (!this.Connection) {
-      throw new Error("");
-    }
-
-    return this.Connection;
+  public formatQuery<T>(data: unknown[]) {
+    return data[0] as T[];
   }
 
-  public async GetAllTables(_: string[], dbName: string): Promise<Entity[]> {
-    const response: {
+  public async GetAllTables(): Promise<Entity[]> {
+    const response = await this.runQuery<{
       TABLE_SCHEMA: string;
       TABLE_NAME: string;
       DB_NAME: string;
-    }[] = await this.ExecQuery(
+    }>(
       `SELECT TABLE_SCHEMA, TABLE_NAME, TABLE_SCHEMA as DB_NAME
                         FROM information_schema.tables
                         WHERE table_type='BASE TABLE'
-                        AND table_schema = '${dbName}'`
+                        AND table_schema = '${this.connectionOptions.database}'`
     );
-    // const response = await this.GetAllTablesQuery(schemas, dbNames);
+
     const ret: Entity[] = [] as Entity[];
     response.forEach((val) => {
       ret.push({
@@ -59,12 +46,8 @@ export default class MysqlDriver extends AbstractDriver {
     return ret;
   }
 
-  public async GetCoulmnsFromEntity(
-    entities: Entity[],
-    _: string[],
-    dbName: string
-  ): Promise<Entity[]> {
-    const response = await this.ExecQuery<{
+  public async GetCoulmnsFromEntity(entities: Entity[]): Promise<Entity[]> {
+    const response = await this.runQuery<{
       TABLE_NAME: string;
       COLUMN_NAME: string;
       COLUMN_DEFAULT: string;
@@ -80,7 +63,7 @@ export default class MysqlDriver extends AbstractDriver {
     }>(`SELECT TABLE_NAME,COLUMN_NAME,COLUMN_DEFAULT,IS_NULLABLE,
             DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,NUMERIC_PRECISION,NUMERIC_SCALE,
             CASE WHEN EXTRA like '%auto_increment%' THEN 1 ELSE 0 END IsIdentity, COLUMN_TYPE, COLUMN_KEY, COLUMN_COMMENT
-            FROM INFORMATION_SCHEMA.COLUMNS where TABLE_SCHEMA = '${dbName}'
+            FROM INFORMATION_SCHEMA.COLUMNS where TABLE_SCHEMA = '${this.connectionOptions.database}'
 			order by ordinal_position`);
     entities.forEach((ent) => {
       response
@@ -253,7 +236,7 @@ export default class MysqlDriver extends AbstractDriver {
               );
               break;
           }
-          if (this.ColumnTypesWithPrecision.some((v) => v === columnType)) {
+          if (COLUMN_TYPES_WITH_PRECISION.some((v) => v === columnType)) {
             if (resp.NUMERIC_PRECISION !== null) {
               options.precision = resp.NUMERIC_PRECISION;
             }
@@ -261,14 +244,14 @@ export default class MysqlDriver extends AbstractDriver {
               options.scale = resp.NUMERIC_SCALE;
             }
           }
-          if (this.ColumnTypesWithLength.some((v) => v === columnType)) {
+          if (COLUMN_TYPES_WITH_LENGTH.some((v) => v === columnType)) {
             options.length =
               resp.CHARACTER_MAXIMUM_LENGTH > 0
                 ? resp.CHARACTER_MAXIMUM_LENGTH
                 : undefined;
           }
           if (
-            this.ColumnTypesWithWidth.some(
+            COLUMN_TYPES_WITH_WIDTH.some(
               (v) => v === columnType && tscType !== "boolean"
             )
           ) {
@@ -291,13 +274,9 @@ export default class MysqlDriver extends AbstractDriver {
     return entities;
   }
 
-  public async GetIndexesFromEntity(
-    entities: Entity[],
-    _: string[],
-    dbName: string
-  ): Promise<Entity[]> {
+  public async GetIndexesFromEntity(entities: Entity[]): Promise<Entity[]> {
     /* eslint-disable camelcase */
-    const response = await this.ExecQuery<{
+    const response = await this.runQuery<{
       TableName: string;
       IndexName: string;
       ColumnName: string;
@@ -307,7 +286,7 @@ export default class MysqlDriver extends AbstractDriver {
     }>(`SELECT TABLE_NAME TableName,INDEX_NAME IndexName,COLUMN_NAME ColumnName,CASE WHEN NON_UNIQUE=0 THEN 1 ELSE 0 END is_unique,
         CASE WHEN INDEX_NAME='PRIMARY' THEN 1 ELSE 0 END is_primary_key, CASE WHEN INDEX_TYPE="FULLTEXT" THEN 1 ELSE 0 END is_fulltext
         FROM information_schema.statistics sta
-        WHERE table_schema = '${dbName}'`);
+        WHERE table_schema = '${this.connectionOptions.database}'`);
     /* eslint-enable camelcase */
     entities.forEach((ent) => {
       const entityIndices = response.filter(
@@ -336,12 +315,8 @@ export default class MysqlDriver extends AbstractDriver {
     return entities;
   }
 
-  public async GetRelations(
-    entities: Entity[],
-    _: string[],
-    dbName: string
-  ): Promise<Entity[]> {
-    const response = await this.ExecQuery<{
+  public async GetRelations(entities: Entity[]): Promise<Entity[]> {
+    const response = await this.runQuery<{
       TableWithForeignKey: string;
       // eslint-disable-next-line camelcase
       FK_PartNo: number;
@@ -367,7 +342,7 @@ export default class MysqlDriver extends AbstractDriver {
             INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS RC
                 ON CU.CONSTRAINT_NAME=RC.CONSTRAINT_NAME AND CU.CONSTRAINT_SCHEMA = RC.CONSTRAINT_SCHEMA
           WHERE
-            TABLE_SCHEMA = '${dbName}'
+            TABLE_SCHEMA = '${this.connectionOptions.database}'
             AND CU.REFERENCED_TABLE_NAME IS NOT NULL;
             `);
     const relationsTemp: RelationInternal[] = [] as RelationInternal[];
@@ -409,101 +384,9 @@ export default class MysqlDriver extends AbstractDriver {
     return retVal;
   }
 
-  public async DisconnectFromServer() {
-    const promise = new Promise<boolean>((resolve, reject) => {
-      this.getConnection().end((err) => {
-        if (!err) {
-          resolve(true);
-        } else {
-          LogError(
-            `Error disconnecting from ${this.EngineName} Server.`,
-            false,
-            err.message
-          );
-          reject(err);
-        }
-      });
-    });
-    if (this.Connection) {
-      await promise;
-    }
-  }
-
-  public async ConnectToServer(connectionOptons: IConnectionOptions) {
-    const { database } = connectionOptons;
-    let config: MYSQL.ConnectionOptions;
-    if (connectionOptons.ssl) {
-      config = {
-        database,
-        host: connectionOptons.host,
-        password: connectionOptons.password,
-        port: connectionOptons.port,
-        ssl: {
-          rejectUnauthorized: false,
-        },
-        connectTimeout: 60 * 60 * 1000,
-        user: connectionOptons.user,
-      };
-    } else {
-      config = {
-        database,
-        host: connectionOptons.host,
-        password: connectionOptons.password,
-        port: connectionOptons.port,
-        connectTimeout: 60 * 60 * 1000,
-        user: connectionOptons.user,
-      };
-    }
-
-    config.typeCast = (field, next) => {
-      switch (field.type) {
-        case "VAR_STRING":
-          return field.string();
-        case "BLOB":
-          return field.string();
-        default:
-          return next();
-      }
-    };
-
-    const promise = new Promise<boolean>((resolve, reject) => {
-      this.Connection = this.MYSQL.createConnection(config);
-
-      this.Connection.connect((err) => {
-        if (!err) {
-          resolve(true);
-        } else {
-          LogError(
-            `Error connecting to ${this.EngineName} Server.`,
-            false,
-            err.message
-          );
-          reject(err);
-        }
-      });
-    });
-
-    await promise;
-  }
-
   public async CheckIfDBExists(dbName: string): Promise<boolean> {
-    const resp = await this.ExecQuery(`SHOW DATABASES LIKE "${dbName}" `);
+    const resp = await this.runQuery(`SHOW DATABASES LIKE "${dbName}" `);
     return resp.length > 0;
-  }
-
-  public async ExecQuery<T>(sql: string): Promise<T[]> {
-    const ret: T[] = [];
-    const query = this.getConnection().query(sql);
-    const stream = query.stream({});
-    const promise = new Promise<boolean>((resolve, reject) => {
-      stream.on("data", (chunk) => {
-        ret.push(chunk as unknown as T);
-      });
-      stream.on("error", (err) => reject(err));
-      stream.on("end", () => resolve(true));
-    });
-    await promise;
-    return ret;
   }
 
   private static ReturnDefaultValueFunction(

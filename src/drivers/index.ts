@@ -1,25 +1,25 @@
-import MariaDbDriver from "./MariaDbDriver";
-import OracleDriver from "./OracleDriver";
+// import OracleDriver from "./OracleDriver";
 import SqliteDriver from "./SqliteDriver";
 import PostgresDriver from "./PostgresDriver";
 import MssqlDriver from "./MssqlDriver";
 import MysqlDriver from "./MysqlDriver";
 import AbstractDriver from "./AbstractDriver";
+import { IRDMSConnectionOptions, RDMSSources } from "../types";
 
-export function createDriver(driverName: string): AbstractDriver {
-  switch (driverName) {
-    case "mssql":
-      return new MssqlDriver();
-    case "postgres":
-      return new PostgresDriver();
-    case "mysql":
-      return new MysqlDriver();
-    case "mariadb":
-      return new MariaDbDriver();
-    case "oracle":
-      return new OracleDriver();
-    case "sqlite":
-      return new SqliteDriver();
+export function createDriver(
+  connectionOptions: IRDMSConnectionOptions
+): AbstractDriver {
+  switch (connectionOptions.dataSourceType) {
+    case RDMSSources.MsSql:
+      return new MssqlDriver(connectionOptions);
+    case RDMSSources.Postgres:
+      return new PostgresDriver(connectionOptions);
+    case RDMSSources.MySql:
+      return new MysqlDriver(connectionOptions);
+    // case RDMSSources.:
+    //   return new OracleDriver(connectionOptions);
+    case RDMSSources.Sqlite:
+      return new SqliteDriver(connectionOptions);
     default:
       throw new Error("Database engine not recognized.");
   }

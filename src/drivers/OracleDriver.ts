@@ -1,48 +1,33 @@
 // eslint-disable-next-line import/no-extraneous-dependencies, import/no-unresolved
-import type * as Oracle from "oracledb";
 import { LogError } from "../utils";
 import AbstractDriver from "./AbstractDriver";
-import { IConnectionOptions } from "../types";
+import { IRDMSConnectionOptions } from "../types";
 import { Entity } from "../models/Entity";
 import { Column } from "../models/Column";
 import { Index } from "../models/Index";
 import { RelationInternal } from "../models/RelationInternal";
+import {
+  COLUMN_TYPES_WITH_LENGTH,
+  COLUMN_TYPES_WITH_PRECISION,
+} from "./_constants";
 
 export default class OracleDriver extends AbstractDriver {
-  private Oracle: typeof Oracle;
-
-  private Connection: Oracle.Connection | undefined;
-
-  public constructor() {
-    super();
-    try {
-      // eslint-disable-next-line import/no-extraneous-dependencies, global-require, import/no-unresolved
-      this.Oracle = require("oracledb");
-      this.Oracle.outFormat = (this.Oracle as any).OBJECT;
-    } catch (error) {
-      LogError("", false, error);
-      throw error;
-    }
+  constructor(connectionOptions: IRDMSConnectionOptions) {
+    super(connectionOptions);
   }
 
-  getConnection(): Oracle.Connection {
-    if (!this.Connection) {
-      throw new Error("");
-    }
-
-    return this.Connection;
+  public formatQuery<T>(data: unknown[]) {
+    return data as T[];
   }
 
   public async GetAllTables(): Promise<Entity[]> {
-    const response = (
-      await this.getConnection().execute<{
-        TABLE_SCHEMA: string;
-        TABLE_NAME: string;
-        DB_NAME: string;
-      }>(
-        `SELECT NULL AS TABLE_SCHEMA, TABLE_NAME, NULL AS DB_NAME FROM all_tables WHERE owner = (select user from dual)`
-      )
-    ).rows!;
+    const response = await this.runQuery<{
+      TABLE_SCHEMA: string;
+      TABLE_NAME: string;
+      DB_NAME: string;
+    }>(
+      `SELECT NULL AS TABLE_SCHEMA, TABLE_NAME, NULL AS DB_NAME FROM all_tables WHERE owner = (select user from dual)`
+    );
     const ret: Entity[] = [];
     response.forEach((val) => {
       ret.push({
@@ -58,23 +43,21 @@ export default class OracleDriver extends AbstractDriver {
   }
 
   public async GetCoulmnsFromEntity(entities: Entity[]): Promise<Entity[]> {
-    const response = (
-      await this.getConnection().execute<{
-        TABLE_NAME: string;
-        COLUMN_NAME: string;
-        DATA_DEFAULT: string;
-        NULLABLE: string;
-        DATA_TYPE: string;
-        DATA_LENGTH: number;
-        DATA_PRECISION: number;
-        DATA_SCALE: number;
-        IDENTITY_COLUMN: string; // doesn't exist in old oracle versions (#195)
-        IS_UNIQUE: number;
-      }>(`SELECT utc.*, (select count(*) from USER_CONS_COLUMNS ucc
+    const response = await this.runQuery<{
+      TABLE_NAME: string;
+      COLUMN_NAME: string;
+      DATA_DEFAULT: string;
+      NULLABLE: string;
+      DATA_TYPE: string;
+      DATA_LENGTH: number;
+      DATA_PRECISION: number;
+      DATA_SCALE: number;
+      IDENTITY_COLUMN: string; // doesn't exist in old oracle versions (#195)
+      IS_UNIQUE: number;
+    }>(`SELECT utc.*, (select count(*) from USER_CONS_COLUMNS ucc
              JOIN USER_CONSTRAINTS uc ON  uc.CONSTRAINT_NAME = ucc.CONSTRAINT_NAME and uc.CONSTRAINT_TYPE='U'
             where ucc.column_name = utc.COLUMN_NAME AND ucc.table_name = utc.TABLE_NAME) IS_UNIQUE
-           FROM USER_TAB_COLUMNS utc`)
-    ).rows!;
+           FROM USER_TAB_COLUMNS utc`);
 
     entities.forEach((ent) => {
       response
@@ -187,7 +170,7 @@ export default class OracleDriver extends AbstractDriver {
               LogError(`Unknown column type:${DATA_TYPE}`);
               break;
           }
-          if (this.ColumnTypesWithPrecision.some((v) => v === columnType)) {
+          if (COLUMN_TYPES_WITH_PRECISION.some((v) => v === columnType)) {
             if (resp.DATA_PRECISION !== null) {
               options.precision = resp.DATA_PRECISION;
             }
@@ -195,7 +178,7 @@ export default class OracleDriver extends AbstractDriver {
               options.scale = resp.DATA_SCALE;
             }
           }
-          if (this.ColumnTypesWithLength.some((v) => v === columnType)) {
+          if (COLUMN_TYPES_WITH_LENGTH.some((v) => v === columnType)) {
             options.length =
               resp.DATA_LENGTH > 0 ? resp.DATA_LENGTH : undefined;
           }
@@ -214,19 +197,17 @@ export default class OracleDriver extends AbstractDriver {
   }
 
   public async GetIndexesFromEntity(entities: Entity[]): Promise<Entity[]> {
-    const response = (
-      await this.getConnection().execute<{
-        COLUMN_NAME: string;
-        TABLE_NAME: string;
-        INDEX_NAME: string;
-        UNIQUENESS: string;
-        ISPRIMARYKEY: number;
-      }>(`SELECT ind.TABLE_NAME, ind.INDEX_NAME, col.COLUMN_NAME,ind.UNIQUENESS, CASE WHEN uc.CONSTRAINT_NAME IS NULL THEN 0 ELSE 1 END ISPRIMARYKEY
+    const response = await this.runQuery<{
+      COLUMN_NAME: string;
+      TABLE_NAME: string;
+      INDEX_NAME: string;
+      UNIQUENESS: string;
+      ISPRIMARYKEY: number;
+    }>(`SELECT ind.TABLE_NAME, ind.INDEX_NAME, col.COLUMN_NAME,ind.UNIQUENESS, CASE WHEN uc.CONSTRAINT_NAME IS NULL THEN 0 ELSE 1 END ISPRIMARYKEY
         FROM USER_INDEXES ind
         JOIN USER_IND_COLUMNS col ON ind.INDEX_NAME=col.INDEX_NAME
         LEFT JOIN USER_CONSTRAINTS uc ON  uc.INDEX_NAME = ind.INDEX_NAME
-        ORDER BY col.INDEX_NAME ASC ,col.COLUMN_POSITION ASC`)
-    ).rows!;
+        ORDER BY col.INDEX_NAME ASC ,col.COLUMN_POSITION ASC`);
 
     entities.forEach((ent) => {
       const entityIndices = response.filter(
@@ -253,16 +234,15 @@ export default class OracleDriver extends AbstractDriver {
   }
 
   public async GetRelations(entities: Entity[]): Promise<Entity[]> {
-    const response = (
-      await this.getConnection().execute<{
-        OWNER_TABLE_NAME: string;
-        OWNER_POSITION: string;
-        OWNER_COLUMN_NAME: string;
-        CHILD_TABLE_NAME: string;
-        CHILD_COLUMN_NAME: string;
-        DELETE_RULE: "RESTRICT" | "CASCADE" | "SET NULL" | "NO ACTION";
-        CONSTRAINT_NAME: string;
-      }>(`select owner.TABLE_NAME OWNER_TABLE_NAME,ownCol.POSITION OWNER_POSITION,ownCol.COLUMN_NAME OWNER_COLUMN_NAME,
+    const response = await this.runQuery<{
+      OWNER_TABLE_NAME: string;
+      OWNER_POSITION: string;
+      OWNER_COLUMN_NAME: string;
+      CHILD_TABLE_NAME: string;
+      CHILD_COLUMN_NAME: string;
+      DELETE_RULE: "RESTRICT" | "CASCADE" | "SET NULL" | "NO ACTION";
+      CONSTRAINT_NAME: string;
+    }>(`select owner.TABLE_NAME OWNER_TABLE_NAME,ownCol.POSITION OWNER_POSITION,ownCol.COLUMN_NAME OWNER_COLUMN_NAME,
         child.TABLE_NAME CHILD_TABLE_NAME ,childCol.COLUMN_NAME CHILD_COLUMN_NAME,
         owner.DELETE_RULE,
         owner.CONSTRAINT_NAME
@@ -270,8 +250,7 @@ export default class OracleDriver extends AbstractDriver {
         join user_constraints child on owner.r_constraint_name=child.CONSTRAINT_NAME and child.constraint_type in ('P','U')
         JOIN USER_CONS_COLUMNS ownCol ON owner.CONSTRAINT_NAME = ownCol.CONSTRAINT_NAME
         JOIN USER_CONS_COLUMNS childCol ON child.CONSTRAINT_NAME = childCol.CONSTRAINT_NAME AND ownCol.POSITION=childCol.POSITION
-        ORDER BY OWNER_TABLE_NAME ASC, owner.CONSTRAINT_NAME ASC, OWNER_POSITION ASC`)
-    ).rows!;
+        ORDER BY OWNER_TABLE_NAME ASC, owner.CONSTRAINT_NAME ASC, OWNER_POSITION ASC`);
 
     const relationsTemp: RelationInternal[] = [] as RelationInternal[];
     const relationKeys = new Set(response.map((v) => v.CONSTRAINT_NAME));
@@ -311,50 +290,12 @@ export default class OracleDriver extends AbstractDriver {
     return retVal;
   }
 
-  public async DisconnectFromServer() {
-    if (this.Connection) {
-      await this.Connection.close();
-    }
-  }
-
-  public async ConnectToServer(connectionOptions: IConnectionOptions) {
-    let config: Oracle.ConnectionAttributes;
-    if (connectionOptions.user === String(process.env.ORACLE_UsernameSys)) {
-      config = {
-        connectString: `${connectionOptions.host}:${connectionOptions.port}/${connectionOptions.database}`,
-        externalAuth: connectionOptions.ssl,
-        password: connectionOptions.password,
-        privilege: this.Oracle.SYSDBA,
-        user: connectionOptions.user,
-      };
-    } else {
-      config = {
-        connectString: `${connectionOptions.host}:${connectionOptions.port}/${connectionOptions.database}`,
-        externalAuth: connectionOptions.ssl,
-        password: connectionOptions.password,
-        user: connectionOptions.user,
-      };
-    }
-    const promise = new Promise<boolean>((resolve, reject) => {
-      this.Oracle.getConnection(config, (err, connection) => {
-        if (!err) {
-          this.Connection = connection;
-          resolve(true);
-        } else {
-          LogError("Error connecting to Oracle Server.", false, err.message);
-          reject(err);
-        }
-      });
-    });
-
-    await promise;
-  }
-
   public async CheckIfDBExists(dbName: string): Promise<boolean> {
-    const { rows } = await this.getConnection().execute<any>(
+    const data = await this.runQuery<{ CNT: number }>(
       `select count(*) as CNT from dba_users where username='${dbName.toUpperCase()}'`
     );
-    return rows![0][0] > 0 || rows![0].CNT;
+    // return rows![0][0] > 0 || rows![0].CNT;
+    return data[0].CNT > 0;
   }
 
   private static ReturnDefaultValueFunction(

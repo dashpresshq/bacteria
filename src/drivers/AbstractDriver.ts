@@ -1,58 +1,24 @@
 /* eslint-disable no-plusplus */
 /* eslint-disable no-param-reassign */
 import * as changeCase from "change-case";
+import { Knex } from "knex";
 import { LogError } from "../utils";
 import { Entity } from "../models/Entity";
 import { RelationInternal } from "../models/RelationInternal";
 import { Relation } from "../models/Relation";
 import { Column } from "../models/Column";
-import { IConnectionOptions } from "../types";
+import { IRDMSConnectionOptions } from "../types";
+import { makeDbConnection } from "../utils/connect";
 
 export default abstract class AbstractDriver {
-  public ColumnTypesWithWidth: string[] = [
-    "tinyint",
-    "smallint",
-    "mediumint",
-    "int",
-    "bigint",
-  ];
+  protected _dbInstance: Knex;
 
-  public ColumnTypesWithPrecision: string[] = [
-    "float",
-    "double",
-    "dec",
-    "decimal",
-    "numeric",
-    "real",
-    "double precision",
-    "number",
-    "datetime",
-    "datetime2",
-    "datetimeoffset",
-    "time",
-    "time with time zone",
-    "time without time zone",
-    "timestamp",
-    "timestamp without time zone",
-    "timestamp with time zone",
-    "timestamp with local time zone",
-  ];
+  protected connectionOptions: IRDMSConnectionOptions;
 
-  public ColumnTypesWithLength: string[] = [
-    "character varying",
-    "varying character",
-    "nvarchar",
-    "character",
-    "native character",
-    "varchar",
-    "char",
-    "nchar",
-    "varchar2",
-    "nvarchar2",
-    "raw",
-    "binary",
-    "varbinary",
-  ];
+  constructor(connectionOptions: IRDMSConnectionOptions) {
+    this.connectionOptions = connectionOptions;
+    this._dbInstance = this.getConnection(connectionOptions);
+  }
 
   public static FindManyToManyRelations(dbModel: Entity[]) {
     let retVal = dbModel;
@@ -144,44 +110,35 @@ export default abstract class AbstractDriver {
     return retVal;
   }
 
-  public async GetDataFromServer(
-    connectionOptions: IConnectionOptions
-  ): Promise<Entity[]> {
-    let dbModel = [] as Entity[];
-    await this.ConnectToServer(connectionOptions);
-    dbModel = await this.GetAllTables(
-      connectionOptions.schemaNames,
-      connectionOptions.database
-    );
-    await this.GetCoulmnsFromEntity(
-      dbModel,
-      connectionOptions.schemaNames,
-      connectionOptions.database
-    );
-    await this.GetIndexesFromEntity(
-      dbModel,
-      connectionOptions.schemaNames,
-      connectionOptions.database
-    );
+  public async GetDataFromServer(): Promise<Entity[]> {
+    let dbModel: Entity[] = [];
+    dbModel = await this.GetAllTables();
+    await this.GetCoulmnsFromEntity(dbModel);
+    await this.GetIndexesFromEntity(dbModel);
     AbstractDriver.FindPrimaryColumnsFromIndexes(dbModel);
-    dbModel = await this.GetRelations(
-      dbModel,
-      connectionOptions.schemaNames,
-      connectionOptions.database
-    );
-    await this.DisconnectFromServer();
+    dbModel = await this.GetRelations(dbModel);
+    await this._dbInstance.destroy();
     dbModel = AbstractDriver.FindManyToManyRelations(dbModel);
     return dbModel;
   }
 
-  public abstract ConnectToServer(
-    connectionOptons: IConnectionOptions
-  ): Promise<void>;
+  public getConnection(connectionOptons: IRDMSConnectionOptions): Knex {
+    if (this._dbInstance) {
+      return this._dbInstance;
+    }
 
-  public abstract GetAllTables(
-    schemas: string[],
-    dbName: string
-  ): Promise<Entity[]>;
+    this._dbInstance = makeDbConnection(connectionOptons);
+
+    return this._dbInstance;
+  }
+
+  public abstract formatQuery<T>(data: any): T[];
+
+  public async runQuery<T>(sql: string): Promise<T[]> {
+    return this.formatQuery<T>(await this._dbInstance.raw(sql));
+  }
+
+  public abstract GetAllTables(): Promise<Entity[]>;
 
   public static GetRelationsFromRelationTempInfo(
     relationsTemp: RelationInternal[],
@@ -322,23 +279,11 @@ export default abstract class AbstractDriver {
     return entities;
   }
 
-  public abstract GetCoulmnsFromEntity(
-    entities: Entity[],
-    schemas: string[],
-    dbNames: string
-  ): Promise<Entity[]>;
+  public abstract GetCoulmnsFromEntity(entities: Entity[]): Promise<Entity[]>;
 
-  public abstract GetIndexesFromEntity(
-    entities: Entity[],
-    schemas: string[],
-    dbNames: string
-  ): Promise<Entity[]>;
+  public abstract GetIndexesFromEntity(entities: Entity[]): Promise<Entity[]>;
 
-  public abstract GetRelations(
-    entities: Entity[],
-    schemas: string[],
-    dbNames: string
-  ): Promise<Entity[]>;
+  public abstract GetRelations(entities: Entity[]): Promise<Entity[]>;
 
   public static findNameForNewField(
     _fieldName: string,
@@ -407,8 +352,6 @@ export default abstract class AbstractDriver {
       }
     });
   }
-
-  public abstract DisconnectFromServer(): Promise<void>;
 
   public abstract CheckIfDBExists(dbName: string): Promise<boolean>;
 

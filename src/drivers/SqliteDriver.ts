@@ -1,47 +1,31 @@
-import type * as sqliteLib from "sqlite3";
 import { LogError } from "../utils";
 import AbstractDriver from "./AbstractDriver";
 import { Entity } from "../models/Entity";
 import { Column } from "../models/Column";
 import { Index } from "../models/Index";
 import { RelationInternal } from "../models/RelationInternal";
-import { IConnectionOptions } from "../types";
+import {
+  COLUMN_TYPES_WITH_LENGTH,
+  COLUMN_TYPES_WITH_PRECISION,
+  COLUMN_TYPES_WITH_WIDTH,
+} from "./_constants";
+import { IRDMSConnectionOptions } from "../types";
 
 export default class SqliteDriver extends AbstractDriver {
-  private sqliteLib: typeof sqliteLib;
-
-  private sqlite: sqliteLib.sqlite3;
-
-  private db: sqliteLib.Database | undefined;
+  constructor(connectionOptions: IRDMSConnectionOptions) {
+    super(connectionOptions);
+  }
 
   private tablesWithGeneratedPrimaryKey: string[] = [];
 
-  public GetAllTablesQuery: any;
-
-  public constructor() {
-    super();
-    try {
-      // eslint-disable-next-line import/no-extraneous-dependencies, global-require, import/no-unresolved
-      this.sqliteLib = require("sqlite3");
-      this.sqlite = this.sqliteLib.verbose();
-    } catch (error) {
-      LogError("", false, error);
-      throw error;
-    }
-  }
-
-  getConnection(): sqliteLib.Database {
-    if (!this.db) {
-      throw new Error("");
-    }
-
-    return this.db;
+  public formatQuery<T>(data: unknown[]) {
+    return data as T[];
   }
 
   public async GetAllTables(): Promise<Entity[]> {
     const ret: Entity[] = [] as Entity[];
     // eslint-disable-next-line camelcase
-    const rows = await this.ExecQuery<{ tbl_name: string; sql: string }>(
+    const rows = await this.runQuery<{ tbl_name: string; sql: string }>(
       `SELECT tbl_name, sql FROM "sqlite_master" WHERE "type" = 'table'  AND name NOT LIKE 'sqlite_%'`
     );
     rows.forEach((val) => {
@@ -62,7 +46,7 @@ export default class SqliteDriver extends AbstractDriver {
   public async GetCoulmnsFromEntity(entities: Entity[]): Promise<Entity[]> {
     await Promise.all(
       entities.map(async (ent) => {
-        const response = await this.ExecQuery<{
+        const response = await this.runQuery<{
           cid: number;
           name: string;
           type: string;
@@ -179,7 +163,7 @@ export default class SqliteDriver extends AbstractDriver {
           }
           const sqlOptions = resp.type.match(/\([0-9 ,]+\)/g);
           if (
-            this.ColumnTypesWithPrecision.some((v) => v === columnType) &&
+            COLUMN_TYPES_WITH_PRECISION.some((v) => v === columnType) &&
             sqlOptions
           ) {
             options.precision = Number.parseInt(
@@ -196,7 +180,7 @@ export default class SqliteDriver extends AbstractDriver {
             );
           }
           if (
-            this.ColumnTypesWithLength.some((v) => v === columnType) &&
+            COLUMN_TYPES_WITH_LENGTH.some((v) => v === columnType) &&
             sqlOptions
           ) {
             options.length = Number.parseInt(
@@ -205,7 +189,7 @@ export default class SqliteDriver extends AbstractDriver {
             );
           }
           if (
-            this.ColumnTypesWithWidth.some(
+            COLUMN_TYPES_WITH_WIDTH.some(
               (v) => v === columnType && tscType !== "boolean"
             ) &&
             sqlOptions
@@ -235,7 +219,7 @@ export default class SqliteDriver extends AbstractDriver {
   public async GetIndexesFromEntity(entities: Entity[]): Promise<Entity[]> {
     await Promise.all(
       entities.map(async (ent) => {
-        const response = await this.ExecQuery<{
+        const response = await this.runQuery<{
           seq: number;
           name: string;
           unique: number;
@@ -244,7 +228,7 @@ export default class SqliteDriver extends AbstractDriver {
         }>(`PRAGMA index_list('${ent.name}');`);
         await Promise.all(
           response.map(async (resp) => {
-            const indexColumnsResponse = await this.ExecQuery<{
+            const indexColumnsResponse = await this.runQuery<{
               seqno: number;
               cid: number;
               name: string;
@@ -281,7 +265,7 @@ export default class SqliteDriver extends AbstractDriver {
     let retVal = entities;
     await Promise.all(
       retVal.map(async (entity) => {
-        const response = await this.ExecQuery<{
+        const response = await this.runQuery<{
           id: number;
           seq: number;
           table: string;
@@ -330,53 +314,9 @@ export default class SqliteDriver extends AbstractDriver {
     return retVal;
   }
 
-  public async DisconnectFromServer() {
-    this.getConnection().close();
-  }
-
-  public async ConnectToServer(connectionOptons: IConnectionOptions) {
-    const promise = new Promise<void>((resolve, reject) => {
-      this.db = new this.sqlite.Database(
-        connectionOptons.database,
-        (err: Error | null) => {
-          if (err) {
-            LogError(
-              "Error connecting to SQLite database.",
-              false,
-              err.message
-            );
-            reject(err);
-            return;
-          }
-          resolve();
-        }
-      );
-    });
-    return promise;
-  }
-
   // eslint-disable-next-line class-methods-use-this
   public async CheckIfDBExists(): Promise<boolean> {
     return true;
-  }
-
-  public async ExecQuery<T>(sql: string): Promise<T[]> {
-    let ret: T[] = [];
-    const promise = new Promise<boolean>((resolve, reject) => {
-      this.getConnection().serialize(() => {
-        this.getConnection().all(sql, [], (err: Error, row: T[]) => {
-          if (!err) {
-            ret = row;
-            resolve(true);
-          } else {
-            LogError("Error executing query on SQLite.", false, err.message);
-            reject(err);
-          }
-        });
-      });
-    });
-    await promise;
-    return ret;
   }
 
   private static ReturnDefaultValueFunction(

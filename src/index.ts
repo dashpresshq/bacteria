@@ -1,11 +1,13 @@
 import { createDriver } from "./drivers";
 
-import { IConnectionOptions } from "./types";
+import { IRDMSConnectionOptions, RDMSSources } from "./types";
+
+export { makeDbConnection } from "./utils/connect";
 
 export { Entity } from "./models/Entity";
 
-export async function introspect(connectionOptions: IConnectionOptions) {
-  return await createDriver(connectionOptions.dataSourceType).GetDataFromServer(
-    connectionOptions
-  );
+export { RDMSSources, IRDMSConnectionOptions };
+
+export async function introspect(connectionOptions: IRDMSConnectionOptions) {
+  return await createDriver(connectionOptions).GetDataFromServer();
 }

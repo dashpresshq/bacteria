@@ -1,48 +1,37 @@
-import type * as PG from "pg";
 import { LogError } from "../utils";
 import AbstractDriver from "./AbstractDriver";
-import { IConnectionOptions } from "../types";
+import { IRDMSConnectionOptions } from "../types";
 import { Entity } from "../models/Entity";
 import { Column } from "../models/Column";
 import { Index } from "../models/Index";
 import { RelationInternal } from "../models/RelationInternal";
+import {
+  COLUMN_TYPES_WITH_LENGTH,
+  COLUMN_TYPES_WITH_PRECISION,
+  COLUMN_TYPES_WITH_WIDTH,
+} from "./_constants";
+
+const schemas = ["public"];
 
 export default class PostgresDriver extends AbstractDriver {
-  private PG: typeof PG;
-
-  private Connection: PG.Client | undefined;
-
-  public constructor() {
-    super();
-    try {
-      // eslint-disable-next-line import/no-extraneous-dependencies, global-require, import/no-unresolved
-      this.PG = require("pg");
-    } catch (error) {
-      LogError("", false, error);
-      throw error;
-    }
+  constructor(connectionOptions: IRDMSConnectionOptions) {
+    super(connectionOptions);
   }
 
-  getConnection(): PG.Client {
-    if (!this.Connection) {
-      throw new Error("");
-    }
-
-    return this.Connection;
+  public formatQuery<T>(data: { rows: unknown }) {
+    return data.rows as T[];
   }
 
-  public async GetAllTables(schemas: string[]): Promise<Entity[]> {
-    const response: {
+  public async GetAllTables(): Promise<Entity[]> {
+    const response = await this.runQuery<{
       TABLE_SCHEMA: string;
       TABLE_NAME: string;
       DB_NAME: string;
-    }[] = (
-      await this.getConnection().query(
-        `SELECT table_schema as "TABLE_SCHEMA",table_name as "TABLE_NAME", table_catalog as "DB_NAME" FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND table_schema in (${PostgresDriver.buildEscapedObjectList(
-          schemas
-        )})`
-      )
-    ).rows;
+    }>(
+      `SELECT table_schema as "TABLE_SCHEMA",table_name as "TABLE_NAME", table_catalog as "DB_NAME" FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND table_schema in (${PostgresDriver.buildEscapedObjectList(
+        schemas
+      )})`
+    );
     const ret: Entity[] = [];
     response.forEach((val) => {
       ret.push({
@@ -57,11 +46,8 @@ export default class PostgresDriver extends AbstractDriver {
     return ret;
   }
 
-  public async GetCoulmnsFromEntity(
-    entities: Entity[],
-    schemas: string[]
-  ): Promise<Entity[]> {
-    const response: {
+  public async GetCoulmnsFromEntity(entities: Entity[]): Promise<Entity[]> {
+    const response = await this.runQuery<{
       /* eslint-disable camelcase */
       table_name: string;
       column_name: string;
@@ -77,9 +63,8 @@ export default class PostgresDriver extends AbstractDriver {
       isunique: string;
       enumvalues: string | null;
       /* eslint-enable camelcase */
-    }[] = (
-      await this.getConnection()
-        .query(`SELECT table_name,column_name,udt_name,column_default,is_nullable,
+    }>(
+      `SELECT table_name,column_name,udt_name,column_default,is_nullable,
                     data_type,character_maximum_length,numeric_precision,numeric_scale,
                     case when column_default LIKE 'nextval%' then 'YES' else 'NO' end isidentity,
                     is_identity,
@@ -103,8 +88,9 @@ export default class PostgresDriver extends AbstractDriver {
                     where table_schema in (${PostgresDriver.buildEscapedObjectList(
                       schemas
                     )})
-        			order by ordinal_position`)
-    ).rows;
+        			order by ordinal_position`
+    );
+
     entities.forEach((ent) => {
       response
         .filter((filterVal) => filterVal.table_name === ent.name)
@@ -160,7 +146,7 @@ export default class PostgresDriver extends AbstractDriver {
               .join(" | ");
           }
 
-          if (this.ColumnTypesWithPrecision.some((v) => v === columnType)) {
+          if (COLUMN_TYPES_WITH_PRECISION.some((v) => v === columnType)) {
             if (resp.numeric_precision !== null) {
               options.precision = resp.numeric_precision;
             }
@@ -168,13 +154,13 @@ export default class PostgresDriver extends AbstractDriver {
               options.scale = resp.numeric_scale;
             }
           }
-          if (this.ColumnTypesWithLength.some((v) => v === columnType)) {
+          if (COLUMN_TYPES_WITH_LENGTH.some((v) => v === columnType)) {
             options.length =
               resp.character_maximum_length > 0
                 ? resp.character_maximum_length
                 : undefined;
           }
-          if (this.ColumnTypesWithWidth.some((v) => v === columnType)) {
+          if (COLUMN_TYPES_WITH_WIDTH.some((v) => v === columnType)) {
             options.width =
               resp.character_maximum_length > 0
                 ? resp.character_maximum_length
@@ -424,11 +410,8 @@ export default class PostgresDriver extends AbstractDriver {
     return ret;
   }
 
-  public async GetIndexesFromEntity(
-    entities: Entity[],
-    schemas: string[]
-  ): Promise<Entity[]> {
-    const response: {
+  public async GetIndexesFromEntity(entities: Entity[]): Promise<Entity[]> {
+    const response = await this.runQuery<{
       tablename: string;
       indexname: string;
       columnname: string;
@@ -436,8 +419,7 @@ export default class PostgresDriver extends AbstractDriver {
       is_unique: number;
       // eslint-disable-next-line camelcase
       is_primary_key: number;
-    }[] = (
-      await this.getConnection().query(`SELECT
+    }>(`SELECT
         c.relname AS tablename,
         i.relname as indexname,
         f.attname AS columnname,
@@ -460,8 +442,8 @@ export default class PostgresDriver extends AbstractDriver {
         AND n.nspname in (${PostgresDriver.buildEscapedObjectList(schemas)})
         AND f.attnum > 0
         AND i.oid<>0
-        ORDER BY c.relname,f.attname;`)
-    ).rows;
+        ORDER BY c.relname,f.attname;`);
+
     entities.forEach((ent) => {
       const entityIndices = response.filter(
         (filterVal) => filterVal.tablename === ent.name
@@ -486,11 +468,8 @@ export default class PostgresDriver extends AbstractDriver {
     return entities;
   }
 
-  public async GetRelations(
-    entities: Entity[],
-    schemas: string[]
-  ): Promise<Entity[]> {
-    const response: {
+  public async GetRelations(entities: Entity[]): Promise<Entity[]> {
+    const response = await this.runQuery<{
       tablewithforeignkey: string;
       // eslint-disable-next-line camelcase
       fk_partno: number;
@@ -502,8 +481,7 @@ export default class PostgresDriver extends AbstractDriver {
       // eslint-disable-next-line camelcase
       object_id: string;
       // Distinct because of note in https://www.postgresql.org/docs/9.1/information-schema.html
-    }[] = (
-      await this.getConnection().query(`SELECT DISTINCT
+    }>(`SELECT DISTINCT
             con.relname AS tablewithforeignkey,
             att.attnum as fk_partno,
                  att2.attname AS foreignkeycolumn,
@@ -544,8 +522,7 @@ export default class PostgresDriver extends AbstractDriver {
                 AND att2.attrelid = con.conrelid
                 AND att2.attnum = con.parent
                 AND rc.constraint_name= con.conname AND constraint_catalog=current_database() AND rc.constraint_schema=nspname
-                `)
-    ).rows;
+                `);
 
     const relationsTemp: RelationInternal[] = [] as RelationInternal[];
     const relationKeys = new Set(response.map((v) => v.object_id));
@@ -584,56 +561,11 @@ export default class PostgresDriver extends AbstractDriver {
     return retVal;
   }
 
-  public async DisconnectFromServer() {
-    if (this.Connection) {
-      const promise = new Promise<boolean>((resolve, reject) => {
-        this.getConnection().end((err: Error) => {
-          if (!err) {
-            resolve(true);
-          } else {
-            LogError(
-              "Error disconnecting from to Postgres Server.",
-              false,
-              err.message
-            );
-            reject(err);
-          }
-        });
-      });
-      await promise;
-    }
-  }
-
-  public async ConnectToServer(connectionOptons: IConnectionOptions) {
-    this.Connection = new this.PG.Client({
-      database: connectionOptons.database,
-      host: connectionOptons.host,
-      password: connectionOptons.password,
-      port: connectionOptons.port,
-      ssl: connectionOptons.ssl,
-      statement_timeout: 60 * 60 * 1000,
-      user: connectionOptons.user,
-    });
-
-    const promise = new Promise<boolean>((resolve, reject) => {
-      this.getConnection().connect((err: Error) => {
-        if (!err) {
-          resolve(true);
-        } else {
-          LogError("Error connecting to Postgres Server.", false, err.message);
-          reject(err);
-        }
-      });
-    });
-
-    await promise;
-  }
-
   public async CheckIfDBExists(dbName: string): Promise<boolean> {
-    const resp = await this.getConnection().query(
+    const resp = await this.runQuery(
       `SELECT datname FROM pg_database  WHERE datname  ='${dbName}' `
     );
-    return resp.rowCount > 0;
+    return resp.length > 0;
   }
 
   private static ReturnDefaultValueFunction(

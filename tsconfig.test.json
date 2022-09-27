@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "module": "commonjs",
+        "lib": [
+            "es2020"
+        ],
+        "allowJs": true,
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "outDir": "./dist",
+        "composite": true,
+        "strict": true,
+        "moduleResolution": "node",
+        "rootDirs": [
+            "."
+        ],
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
+    },
+    "references": [],
+    "watchOptions": {
+        "fallbackPolling": "dynamicPriority",
+        "excludeDirectories": [
+            "**/node_modules",
+            "build"
+        ]
+    }
+}

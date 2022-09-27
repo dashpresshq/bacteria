@@ -1,53 +1,38 @@
-import type * as MSSQL from "mssql";
 import { LogError } from "../utils";
 import AbstractDriver from "./AbstractDriver";
 import { Entity } from "../models/Entity";
 import { Column } from "../models/Column";
 import { Index } from "../models/Index";
 import { RelationInternal } from "../models/RelationInternal";
-import { IConnectionOptions } from "../types";
+import {
+  COLUMN_TYPES_WITH_LENGTH,
+  COLUMN_TYPES_WITH_PRECISION,
+} from "./_constants";
+import { IRDMSConnectionOptions } from "../types";
+
+const schemas = ["public"];
 
 export default class MssqlDriver extends AbstractDriver {
-  private MSSQL: typeof MSSQL;
-
-  private Connection: MSSQL.ConnectionPool | undefined;
-
-  public constructor() {
-    super();
-    try {
-      // eslint-disable-next-line import/no-extraneous-dependencies, global-require, import/no-unresolved
-      this.MSSQL = require("mssql");
-    } catch (error) {
-      LogError("", false, error);
-      throw error;
-    }
+  constructor(connectionOptions: IRDMSConnectionOptions) {
+    super(connectionOptions);
   }
 
-  getConnection(): MSSQL.Request {
-    if (!this.Connection) {
-      throw new Error("");
-    }
-
-    return new this.MSSQL.Request(this.Connection);
+  public formatQuery<T>(data: unknown[]) {
+    return data as T[];
   }
 
-  public async GetAllTables(
-    schemas: string[],
-    dbName: string
-  ): Promise<Entity[]> {
-    const response: {
+  public async GetAllTables(): Promise<Entity[]> {
+    const response = await this.runQuery<{
       TABLE_SCHEMA: string;
       TABLE_NAME: string;
       DB_NAME: string;
-    }[] = (
-      await this.getConnection().query(
-        `SELECT TABLE_SCHEMA,TABLE_NAME, table_catalog as "DB_NAME" FROM INFORMATION_SCHEMA.TABLES
+    }>(
+      `SELECT TABLE_SCHEMA,TABLE_NAME, table_catalog as "DB_NAME" FROM INFORMATION_SCHEMA.TABLES
         WHERE TABLE_TYPE='BASE TABLE' and TABLE_SCHEMA in (${MssqlDriver.buildEscapedObjectList(
           schemas
-        )}) AND TABLE_CATALOG = ${dbName}`
-      )
-    ).recordset;
-    // const response = await this.GetAllTablesQuery(schemas, dbNames);
+        )}) AND TABLE_CATALOG = ${this.connectionOptions.database}`
+    );
+
     const ret: Entity[] = [] as Entity[];
     response.forEach((val) => {
       ret.push({
@@ -62,12 +47,8 @@ export default class MssqlDriver extends AbstractDriver {
     return ret;
   }
 
-  public async GetCoulmnsFromEntity(
-    entities: Entity[],
-    schemas: string[],
-    dbName: string
-  ): Promise<Entity[]> {
-    const response: {
+  public async GetCoulmnsFromEntity(entities: Entity[]): Promise<Entity[]> {
+    const response = await this.runQuery<{
       TABLE_NAME: string;
       COLUMN_NAME: string;
       TABLE_SCHEMA: string;
@@ -79,9 +60,8 @@ export default class MssqlDriver extends AbstractDriver {
       NUMERIC_SCALE: number;
       IsIdentity: number;
       IsUnique: number;
-    }[] = (
-      await this.getConnection()
-        .query(`SELECT c.TABLE_NAME,c.TABLE_SCHEMA,c.COLUMN_NAME,c.COLUMN_DEFAULT,IS_NULLABLE, DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,NUMERIC_PRECISION,NUMERIC_SCALE,
+    }>(
+      `SELECT c.TABLE_NAME,c.TABLE_SCHEMA,c.COLUMN_NAME,c.COLUMN_DEFAULT,IS_NULLABLE, DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,NUMERIC_PRECISION,NUMERIC_SCALE,
             COLUMNPROPERTY(object_id(c.TABLE_SCHEMA + '.'+ c.TABLE_NAME),c. COLUMN_NAME, 'IsIdentity') IsIdentity,
              CASE WHEN ISNULL(tc.cnt,0)>0 THEN 1 ELSE 0 END AS IsUnique
               FROM INFORMATION_SCHEMA.COLUMNS c
@@ -89,9 +69,11 @@ export default class MssqlDriver extends AbstractDriver {
                on tc.TABLE_NAME = c.TABLE_NAME and tc.COLUMN_NAME = c.COLUMN_NAME and tc.TABLE_SCHEMA=c.TABLE_SCHEMA
               where c.TABLE_SCHEMA in (${MssqlDriver.buildEscapedObjectList(
                 schemas
-              )}) AND c.TABLE_CATALOG = ${dbName} order by ordinal_position
-        `)
-    ).recordset;
+              )}) AND c.TABLE_CATALOG = ${
+        this.connectionOptions.database
+      } order by ordinal_position
+        `
+    );
     entities.forEach((ent) => {
       response
         .filter((filterVal) => {
@@ -221,7 +203,7 @@ export default class MssqlDriver extends AbstractDriver {
               break;
           }
 
-          if (this.ColumnTypesWithPrecision.some((v) => v === columnType)) {
+          if (COLUMN_TYPES_WITH_PRECISION.some((v) => v === columnType)) {
             if (resp.NUMERIC_PRECISION !== null) {
               options.precision = resp.NUMERIC_PRECISION;
             }
@@ -229,7 +211,7 @@ export default class MssqlDriver extends AbstractDriver {
               options.scale = resp.NUMERIC_SCALE;
             }
           }
-          if (this.ColumnTypesWithLength.some((v) => v === columnType)) {
+          if (COLUMN_TYPES_WITH_LENGTH.some((v) => v === columnType)) {
             options.length =
               resp.CHARACTER_MAXIMUM_LENGTH > 0
                 ? resp.CHARACTER_MAXIMUM_LENGTH
@@ -248,23 +230,15 @@ export default class MssqlDriver extends AbstractDriver {
     return entities;
   }
 
-  public async GetIndexesFromEntity(
-    entities: Entity[],
-    schemas: string[]
-  ): Promise<Entity[]> {
-    /* eslint-disable camelcase */
-    const response: {
+  public async GetIndexesFromEntity(entities: Entity[]): Promise<Entity[]> {
+    const response = await this.runQuery<{
       TableName: string;
       TableSchema: string;
       IndexName: string;
       ColumnName: string;
       is_unique: boolean;
       is_primary_key: boolean;
-    }[] = [];
-    /* eslint-enable camelcase */
-
-    const resp = (
-      await this.getConnection().query(`SELECT
+    }>(`SELECT
                 TableName = t.name,
                 TableSchema = s.name,
                 IndexName = ind.name,
@@ -286,9 +260,7 @@ export default class MssqlDriver extends AbstractDriver {
                   schemas
                 )})
                     ORDER BY
-                    t.name, ind.name, ind.index_id, ic.key_ordinal;`)
-    ).recordset;
-    response.push(...resp);
+                    t.name, ind.name, ind.index_id, ic.key_ordinal;`);
 
     /* eslint-enable no-await-in-loop */
     entities.forEach((ent) => {
@@ -317,11 +289,8 @@ export default class MssqlDriver extends AbstractDriver {
     return entities;
   }
 
-  public async GetRelations(
-    entities: Entity[],
-    schemas: string[]
-  ): Promise<Entity[]> {
-    const response: {
+  public async GetRelations(entities: Entity[]): Promise<Entity[]> {
+    const response = await this.runQuery<{
       TableWithForeignKey: string;
       // eslint-disable-next-line camelcase
       FK_PartNo: number;
@@ -331,20 +300,7 @@ export default class MssqlDriver extends AbstractDriver {
       onDelete: "RESTRICT" | "CASCADE" | "SET_NULL" | "NO_ACTION";
       onUpdate: "RESTRICT" | "CASCADE" | "SET_NULL" | "NO_ACTION";
       objectId: number;
-    }[] = [];
-    /* eslint-disable no-await-in-loop */
-    const resp: {
-      TableWithForeignKey: string;
-      // eslint-disable-next-line camelcase
-      FK_PartNo: number;
-      ForeignKeyColumn: string;
-      TableReferenced: string;
-      ForeignKeyColumnReferenced: string;
-      onDelete: "RESTRICT" | "CASCADE" | "SET_NULL" | "NO_ACTION";
-      onUpdate: "RESTRICT" | "CASCADE" | "SET_NULL" | "NO_ACTION";
-      objectId: number;
-    }[] = (
-      await this.getConnection().query(`select
+    }>(`select
                 parentTable.name as TableWithForeignKey,
                 fkc.constraint_column_id as FK_PartNo,
                 parentColumn.name as ForeignKeyColumn,
@@ -372,9 +328,7 @@ export default class MssqlDriver extends AbstractDriver {
                   schemas
                 )})
                     order by
-                    TableWithForeignKey, FK_PartNo`)
-    ).recordset;
-    response.push(...resp);
+                    TableWithForeignKey, FK_PartNo`);
     /* eslint-enable no-await-in-loop */
 
     const relationsTemp: RelationInternal[] = [] as RelationInternal[];
@@ -414,47 +368,11 @@ export default class MssqlDriver extends AbstractDriver {
     return retVal;
   }
 
-  public async DisconnectFromServer() {
-    if (this.Connection) {
-      await this.Connection.close();
-    }
-  }
-
-  public async ConnectToServer(connectionOptons: IConnectionOptions) {
-    const { database } = connectionOptons;
-    const config: MSSQL.config = {
-      database,
-      options: {
-        appName: "hadmean",
-        encrypt: connectionOptons.ssl,
-        instanceName: connectionOptons.instanceName,
-      },
-      password: connectionOptons.password,
-      port: connectionOptons.port,
-      requestTimeout: 60 * 60 * 1000,
-      server: connectionOptons.host,
-      user: connectionOptons.user,
-    };
-
-    const promise = new Promise<boolean>((resolve, reject) => {
-      this.Connection = new this.MSSQL.ConnectionPool(config, (err) => {
-        if (!err) {
-          resolve(true);
-        } else {
-          LogError("Error connecting to MSSQL Server.", false, err.message);
-          reject(err);
-        }
-      });
-    });
-
-    await promise;
-  }
-
   public async CheckIfDBExists(dbName: string): Promise<boolean> {
-    const resp = await this.getConnection().query(
+    const resp = await this.runQuery<unknown[]>(
       `SELECT name FROM master.sys.databases WHERE name = N'${dbName}' `
     );
-    return resp.recordset.length > 0;
+    return resp.length > 0;
   }
 
   private static ReturnDefaultValueFunction(
