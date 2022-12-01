@@ -14,7 +14,7 @@ Supports
 To run, use:
 
 ```bash
-npm start # or yarn start
+npm start 
 ```
 
 ### Build
@@ -22,7 +22,7 @@ npm start # or yarn start
 To do a one-off build, use:
 
 ```bash
-npm run build # or yarn build.
+npm run build 
 ```
 
 This builds to `/dist` and runs the project in watch mode so any edits you save inside `src` causes a rebuild to `/dist`.
@@ -33,6 +33,6 @@ This builds to `/dist` and runs the project in watch mode so any edits you save 
 Tests are set up to run with 
 
 ```bash
-npm test # or yarn test
+npm test 
 ```
 
