@@ -25,7 +25,7 @@ To do a one-off build, use:
 npm run build 
 ```
 
-This builds to `/dist` and runs the project in watch mode so any edits you save inside `src` causes a rebuild to `/dist`.
+This builds to `/dist` and runs the project in watch mode so any edits you save inside `src` cause a rebuild to `/dist`.
 
 
 ### Tests
