@@ -1,6 +1,6 @@
 # Bacteria
 
-Bacteria is the DB introspection package for Hadmean
+Bacteria is a database introspection library
 
 Supports
  - MySQL/MariaDB
