@@ -3,5 +3,5 @@
 node_modules
 dist
 src/*.json
-src/option.ts
+src/option.run.ts
 *.sqlite
