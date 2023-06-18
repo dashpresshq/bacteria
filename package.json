@@ -1,6 +1,6 @@
 {
   "name": "@hadmean/bacteria",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -31,7 +31,8 @@
     "knex": "^2.3.0",
     "mssql": "^8.1.2",
     "mysql2": "^2.3.3",
-    "pg": "^8.7.3"
+    "pg": "^8.7.3",
+    "sqlite3": "^5.1.6"
   },
   "devDependencies": {
     "@hadmean/eslint-config": "^1.0.5",
