@@ -1,3 +1,3 @@
 module.exports = {
-  extends: ["@hadmean"],
+  extends: ["@dashpress"],
 };
