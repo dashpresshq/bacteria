@@ -1,6 +1,6 @@
 {
   "name": "@dashpress/bacteria",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -22,10 +22,10 @@
   "dependencies": {
     "@types/fs-extra": "^9.0.13",
     "@types/pg": "^8.6.5",
-    "better-sqlite3": "^7.6.2",
+    "better-sqlite3": "^9.4.0",
     "change-case": "^4.1.2",
-    "knex": "^2.3.0",
-    "mysql2": "^2.3.3",
+    "knex": "^3.1.0",
+    "mysql2": "^3.9.1",
     "pg": "^8.7.3",
     "tedious": "^16.6.1"
   },
