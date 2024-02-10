@@ -1,4 +1,4 @@
-import knex from "knex";
+import { knex } from "knex";
 import { IRDMSConnectionOptions, RDMSSources } from "../types";
 
 const SupportedDataSourceToKnexClientMap: Record<
