@@ -14,11 +14,25 @@ const SupportedDataSourceToKnexClientMap: Record<
 const handleStringCredentials = (credentials: string) => {
   if (credentials.startsWith("sqlite")) {
     return knex({
-      client: "better-sqlite3",
+      client: SupportedDataSourceToKnexClientMap[RDMSSources.Sqlite],
       connection: {
         filename: credentials.split(":")[1],
       },
       useNullAsDefault: true,
+    });
+  }
+
+  if (credentials.startsWith("mysql:")) {
+    return knex({
+      client: SupportedDataSourceToKnexClientMap[RDMSSources.MySql],
+      connection: credentials,
+    });
+  }
+
+  if (credentials.startsWith("mssql:")) {
+    return knex({
+      client: SupportedDataSourceToKnexClientMap[RDMSSources.MsSql],
+      connection: credentials,
     });
   }
 
