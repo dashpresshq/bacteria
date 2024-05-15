@@ -5,7 +5,7 @@ const SupportedDataSourceToKnexClientMap: Record<
   Partial<RDMSSources>,
   string
 > = {
-  mssql: "tedious",
+  mssql: "mssql",
   postgres: "pg",
   mysql: "mysql2",
   sqlite: "better-sqlite3",

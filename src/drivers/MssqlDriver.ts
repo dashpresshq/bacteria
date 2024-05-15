@@ -29,8 +29,8 @@ export default class MssqlDriver extends AbstractDriver {
     }>(
       `SELECT TABLE_SCHEMA,TABLE_NAME, table_catalog as "DB_NAME" FROM INFORMATION_SCHEMA.TABLES
         WHERE TABLE_TYPE='BASE TABLE' and TABLE_SCHEMA in (${MssqlDriver.buildEscapedObjectList(
-          schemas
-        )}) AND TABLE_CATALOG = ${this.connectionOptions.database}`
+          this.connectionOptions.schemaNames || ["dbo"]
+        )}) AND TABLE_CATALOG = '${this.connectionOptions.database}'`
     );
 
     const ret: Entity[] = [] as Entity[];
@@ -68,10 +68,10 @@ export default class MssqlDriver extends AbstractDriver {
               LEFT JOIN (SELECT tc.TABLE_SCHEMA,tc.TABLE_NAME,cu.COLUMN_NAME,COUNT(1) AS cnt FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc inner join INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE cu on cu.CONSTRAINT_NAME = tc.CONSTRAINT_NAME where tc.CONSTRAINT_TYPE = 'UNIQUE' GROUP BY tc.TABLE_SCHEMA,tc.TABLE_NAME,cu.COLUMN_NAME) AS tc
                on tc.TABLE_NAME = c.TABLE_NAME and tc.COLUMN_NAME = c.COLUMN_NAME and tc.TABLE_SCHEMA=c.TABLE_SCHEMA
               where c.TABLE_SCHEMA in (${MssqlDriver.buildEscapedObjectList(
-                schemas
-              )}) AND c.TABLE_CATALOG = ${
+                this.connectionOptions.schemaNames || ["dbo"]
+              )}) AND c.TABLE_CATALOG = '${
         this.connectionOptions.database
-      } order by ordinal_position
+      }' order by ordinal_position
         `
     );
     entities.forEach((ent) => {
