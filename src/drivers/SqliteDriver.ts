@@ -95,10 +95,10 @@ export default class SqliteDriver extends AbstractDriver {
               tscType = "number";
               break;
             case "bigint":
-              tscType = "string";
+              tscType = "number";
               break;
             case "unsigned big int":
-              tscType = "string";
+              tscType = "number";
               break;
             case "character":
               tscType = "string";
@@ -149,7 +149,7 @@ export default class SqliteDriver extends AbstractDriver {
               tscType = "boolean";
               break;
             case "date":
-              tscType = "string";
+              tscType = "Date";
               break;
             case "datetime":
               tscType = "Date";

@@ -97,7 +97,7 @@ export default class MssqlDriver extends AbstractDriver {
           let tscType = "";
           switch (resp.DATA_TYPE) {
             case "bigint":
-              tscType = "string";
+              tscType = "number";
               break;
             case "bit":
               tscType = "boolean";
